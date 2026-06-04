@@ -1632,11 +1632,6 @@ document.querySelectorAll('thead th[data-sort]').forEach(th => {
   });
 });
 
-// Filters
-['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
-  document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
-});
-
 // Metric toggles
 document.querySelectorAll('.m-toggle[data-metric]').forEach(btn => {
   btn.addEventListener('click', () => {
