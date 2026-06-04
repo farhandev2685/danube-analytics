@@ -315,10 +315,6 @@ tbody td:first-child{padding-left:18px}
         <span class="filter-lbl">FILTERS:</span>
         <select class="f-sel" id="ov-campaign">
           <option value="">All Campaigns</option>
-          <option value="Awareness">Awareness</option>
-          <option value="Eid Sale">Eid Sale</option>
-          <option value="Pay Week">Pay Week</option>
-          <option value="Other">Other</option>
         </select>
         <select class="f-sel" id="ov-region">
           <option value="">All Regions</option>
@@ -328,15 +324,6 @@ tbody td:first-child{padding-left:18px}
         </select>
         <select class="f-sel" id="ov-month">
           <option value="">All Months</option>
-          <option value="2025-10">Oct 2025</option>
-          <option value="2025-11">Nov 2025</option>
-          <option value="2025-12">Dec 2025</option>
-          <option value="2026-01">Jan 2026</option>
-          <option value="2026-02">Feb 2026</option>
-          <option value="2026-03">Mar 2026</option>
-          <option value="2026-04">Apr 2026</option>
-          <option value="2026-05">May 2026</option>
-          <option value="2026-06">Jun 2026</option>
         </select>
         <div class="f-divider"></div>
         <div class="metric-grp">
@@ -598,15 +585,6 @@ tbody td:first-child{padding-left:18px}
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Month Filter</div>
             <select class="f-sel" style="width:100%" id="rb-month">
               <option value="">All Months</option>
-              <option value="2025-10">Oct 2025</option>
-              <option value="2025-11">Nov 2025</option>
-              <option value="2025-12">Dec 2025</option>
-              <option value="2026-01">Jan 2026</option>
-              <option value="2026-02">Feb 2026</option>
-              <option value="2026-03">Mar 2026</option>
-              <option value="2026-04">Apr 2026</option>
-              <option value="2026-05">May 2026</option>
-              <option value="2026-06">Jun 2026</option>
             </select>
           </div>
         </div>
@@ -1636,11 +1614,6 @@ document.querySelectorAll('thead th[data-sort]').forEach(th => {
   });
 });
 
-// Filters
-['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
-  document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
-});
-
 // Metric toggles
 document.querySelectorAll('.m-toggle[data-metric]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1672,12 +1645,12 @@ document.getElementById('btn-tbl-csv').addEventListener('click', () => {
 // ── OVERVIEW PAGE ────────────────────────────────────────────────────────
 let ovInited = false;
 function initOverviewPage() {
-  if (ovInited) {
-    renderOverview();
-    return;
-  }
   ['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
+    const el = document.getElementById(id);
+    if (el && !el.hasAttribute('data-init')) {
+      el.addEventListener('change', () => { regPage = 1; renderOverview(); });
+      el.setAttribute('data-init', 'true');
+    }
   });
   renderOverview();
   ovInited = true;
