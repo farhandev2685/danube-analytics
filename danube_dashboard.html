@@ -815,7 +815,8 @@ function initializeDashboard(data) {
   ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
   ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
   ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+  // Use MONTH_LABELS for formatted month display
+  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS, '', true, MONTH_LABELS));
   
   // Update record count
   document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
@@ -943,7 +944,7 @@ function downloadCSV(rows, filename) {
 let ALL_REGIONS = [];
 let ALL_FORMATS = [];
 
-function populateSelect(id, items, placeholder = '', keepFirst = true) {
+function populateSelect(id, items, placeholder = '', keepFirst = true, labelMap = null) {
   const el = document.getElementById(id);
   if (!el) return;
   const current = el.value;
@@ -953,7 +954,8 @@ function populateSelect(id, items, placeholder = '', keepFirst = true) {
   items.forEach(v => {
     if (v === undefined || v === null || v === '') return;
     const o = document.createElement('option');
-    o.value = v; o.textContent = v;
+    o.value = v; 
+    o.textContent = labelMap && labelMap[v] ? labelMap[v] : v;
     el.appendChild(o);
   });
   el.value = current;
