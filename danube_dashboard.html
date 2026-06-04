@@ -1837,55 +1837,50 @@ document.getElementById('rb-generate').addEventListener('click', () => {
 
   rbData = filterData({ ct, reg, m });
 
-  // Get selected group-by dims
+  // Get selected columns to display
   const dims = [...document.querySelectorAll('#rb-group-by input:checked')].map(i => i.value);
-  // Get selected metrics
   const metrics = [...document.querySelectorAll('#rb-metrics input:checked')].map(i => i.value);
 
+  console.log('Selected dimensions:', dims);
   console.log('Selected metrics:', metrics);
-  console.log('Sample data has viewability:', rbData.length > 0 ? rbData[0].viewability : 'no data');
+  console.log('Total records:', rbData.length);
+  console.log('Sample row:', rbData[0]);
 
-  if (!dims.length) { showToast('Select at least one Group By dimension', 'error'); return; }
+  if (!dims.length && !metrics.length) { 
+    showToast('Select at least one column to display', 'error'); 
+    return; 
+  }
 
-  // Aggregate
-  const grouped = {};
-  rbData.forEach(r => {
-    const key = dims.map(d => r[d] || '').join(' | ');
-    if (!grouped[key]) { 
-      grouped[key] = {_dims:{}, i:0, cl:0, sp:0, rc:0, viewability:0, viewabilityCnt:0, cnt:0}; 
-      dims.forEach(d => grouped[key]._dims[d] = r[d] || ''); 
-    }
-    grouped[key].i  += r.i;
-    grouped[key].cl += r.cl;
-    grouped[key].sp += r.sp;
-    grouped[key].rc += r.rc;
-    grouped[key].cnt++;
-    // Aggregate viewability - check for any numeric value
-    const viewVal = parseFloat(r.viewability);
-    if (!isNaN(viewVal) && viewVal > 0) {
-      grouped[key].viewability += viewVal;
-      grouped[key].viewabilityCnt++;
-    }
+  // Use raw data directly - no aggregation
+  // Calculate CTR, CPM, CPC for each row if needed
+  const rows = rbData.map(r => {
+    const ctr = r.i > 0 ? (r.cl / r.i * 100) : 0;
+    const cpm = r.i > 0 ? (r.sp / r.i * 1000) : 0;
+    const cpc = r.cl > 0 ? (r.sp / r.cl) : 0;
+    return { ...r, ctr, cpm, cpc };
   });
+
+  // Column labels
+  const colLabels = {
+    reg: 'Region', 
+    campaign: 'Campaign Name', 
+    ct: 'Campaign Type', 
+    f: 'Creative Format', 
+    m: 'Date',
+    i: 'Impressions', 
+    cl: 'Clicks', 
+    ctr: 'CTR', 
+    sp: 'Spend', 
+    cpm: 'CPM', 
+    cpc: 'CPC', 
+    rc: 'Reach', 
+    viewability: 'Viewability'
+  };
   
-  console.log('Grouped data sample:', Object.values(grouped)[0]);
-
-  const rows = Object.values(grouped).map(v => {
-    const ctr = v.i > 0 ? v.cl/v.i*100 : 0;
-    const cpm = v.i > 0 ? v.sp/v.i*1000 : 0;
-    const cpc = v.cl > 0 ? v.sp/v.cl : 0;
-    const viewability = v.viewabilityCnt > 0 ? v.viewability / v.viewabilityCnt : 0;
-    console.log('Row viewability:', viewability, 'count:', v.viewabilityCnt);
-    return { ...v._dims, i:v.i, cl:v.cl, sp:v.sp, rc:v.rc, ctr, cpm, cpc, viewability, cnt:v.cnt };
-  }).sort((a,b) => b.i - a.i);
-
-  // Render header
-  const dimLabels = {reg:'Region', campaign:'Campaign Name', ct:'Campaign Type', f:'Format', m:'Month'};
-  const metricLabelsRB = {i:'Impressions', cl:'Clicks', ctr:'CTR', sp:'Spend', cpm:'CPM', cpc:'CPC', rc:'Reach', viewability:'Viewability'};
   const allCols = [...dims, ...metrics];
 
   document.getElementById('rb-thead').innerHTML = '<tr>' + allCols.map(c =>
-    `<th>${dimLabels[c]||metricLabelsRB[c]||c}</th>`).join('') + '</tr>';
+    `<th>${colLabels[c] || c}</th>`).join('') + '</tr>';
 
   // Paginate
   rbPage = 1;
@@ -1894,18 +1889,18 @@ document.getElementById('rb-generate').addEventListener('click', () => {
     const pages = Math.ceil(total/rbPerPage);
     const slice = rows.slice((rbPage-1)*rbPerPage, rbPage*rbPerPage);
 
-    document.getElementById('rb-sub').textContent = `${total} groups · ${rbData.length} source records`;
+    document.getElementById('rb-sub').textContent = `Showing ${total.toLocaleString()} records from imported data`;
     document.getElementById('rb-tbody').innerHTML = slice.map(r => '<tr>' + allCols.map(c => {
-      if (c === 'i') return `<td><strong>${fmt(r.i,'imp')}</strong></td>`;
-      if (c === 'cl') return `<td>${fmt(r.cl,'clk')}</td>`;
-      if (c === 'ctr') return `<td><span class="ctr-badge ${r.ctr>=0.65?'ctr-hi':r.ctr>=0.62?'ctr-md':'ctr-lo'}">${r.ctr.toFixed(2)}%</span></td>`;
-      if (c === 'sp') return `<td>$${(r.sp/1000).toFixed(1)}K</td>`;
+      if (c === 'i') return `<td><strong>${r.i.toLocaleString()}</strong></td>`;
+      if (c === 'cl') return `<td>${r.cl.toLocaleString()}</td>`;
+      if (c === 'ctr') return `<td>${r.ctr.toFixed(2)}%</td>`;
+      if (c === 'sp') return `<td>$${r.sp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
       if (c === 'cpm') return `<td>$${r.cpm.toFixed(2)}</td>`;
       if (c === 'cpc') return `<td>$${r.cpc.toFixed(2)}</td>`;
-      if (c === 'rc') return `<td>${fmt(r.rc,'imp')}</td>`;
-      if (c === 'viewability') return `<td>${r.viewability !== undefined && r.viewability !== null ? r.viewability.toFixed(2) + '%' : '-'}</td>`;
-      if (c === 'm') return `<td>${MONTH_LABELS[r.m]||r.m}</td>`;
-      return `<td>${r[c]||''}</td>`;
+      if (c === 'rc') return `<td>${r.rc.toLocaleString()}</td>`;
+      if (c === 'viewability') return `<td>${r.viewability !== undefined && r.viewability !== null && r.viewability !== 0 ? r.viewability.toFixed(2) + '%' : (r.viewability === 0 ? '0%' : '-')}</td>`;
+      if (c === 'm') return `<td>${r.m || ''}</td>`;
+      return `<td>${r[c] !== undefined && r[c] !== null ? r[c] : ''}</td>`;
     }).join('') + '</tr>').join('');
 
     const pg = document.getElementById('rb-pagination');
