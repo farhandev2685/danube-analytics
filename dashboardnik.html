@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Danube Campaign Analytics — PERFORMENA</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --pink:#E6586C;--pink-dark:#cc4a5e;--pink-light:#fde8eb;--pink-bg:rgba(230,88,108,0.08);
+  --purple:#9D5A8B;--dark:#2C2C2C;--white:#FFFFFF;
+  --g100:#F8F8F8;--g200:#F0F0F0;--g300:#E0E0E0;--g400:#AAAAAA;--g600:#666666;
+  --font:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--g100);color:var(--dark);font-size:13px}
+
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:224px;flex-shrink:0;background:var(--dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:200;overflow:hidden}
+.main{margin-left:224px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* SIDEBAR GLOWS */
+.sidebar::before{content:'';position:absolute;top:-80px;right:-80px;width:220px;height:220px;background:radial-gradient(circle,rgba(230,88,108,0.18) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+.sidebar::after{content:'';position:absolute;bottom:20px;left:-60px;width:180px;height:180px;background:radial-gradient(circle,rgba(157,90,139,0.14) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+
+/* LOGO */
+.logo-wrap{padding:0;border-bottom:1px solid rgba(255,255,255,0.07);overflow:hidden}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-svg{width:36px;height:36px;flex-shrink:0}
+.logo-text{line-height:1.15}
+.logo-name{font-size:13px;font-weight:700;letter-spacing:1.8px;color:#fff}
+.logo-sub{font-size:9px;letter-spacing:1px;color:var(--g400);text-transform:uppercase}
+.client-chip{margin:12px 18px 0;padding:9px 12px;background:rgba(230,88,108,0.13);border:1px solid rgba(230,88,108,0.28);border-radius:6px}
+.client-chip .lbl{font-size:9px;letter-spacing:1px;color:var(--g400);text-transform:uppercase;margin-bottom:3px}
+.client-chip .val{font-size:13px;font-weight:700;color:#fff}
+
+/* NAV */
+.nav-group{padding:20px 0 6px}
+.nav-section-lbl{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--g400);padding:0 18px 8px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;color:rgba(255,255,255,0.55);font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,0.05)}
+.nav-item.active{color:#fff;border-left-color:var(--pink);background:rgba(230,88,108,0.09)}
+.nav-item .ico{font-size:15px;width:20px;text-align:center}
+.nav-scroll{flex:1;overflow-y:auto}
+
+/* SIDEBAR FOOTER */
+.sidebar-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.07)}
+.sidebar-foot .lbl{font-size:10px;color:var(--g400);margin-bottom:6px}
+.dr-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(230,88,108,0.15);border:1px solid rgba(230,88,108,0.3);color:var(--pink);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1px solid var(--g300);height:58px;display:flex;align-items:center;padding:0 26px;gap:16px;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:700;letter-spacing:-.3px;margin-right:4px}
+.topbar-sub{font-size:11px;color:var(--g600)}
+.topbar-spacer{flex:1}
+.tb-btn{display:flex;align-items:center;gap:5px;padding:6px 13px;border:1px solid var(--g300);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:var(--dark);transition:all .18s;white-space:nowrap}
+.tb-btn:hover{border-color:var(--pink);color:var(--pink)}
+.tb-btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.tb-btn.primary:hover{background:var(--pink-dark)}
+
+/* CONTENT */
+.content{padding:22px 26px;flex:1}
+.page{display:none}
+.page.active{display:block}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;border:1px solid var(--g300);border-radius:8px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.filter-lbl{font-size:11px;font-weight:700;color:var(--dark);letter-spacing:.5px;white-space:nowrap}
+.f-sel{border:1px solid var(--g300);border-radius:4px;padding:6px 26px 6px 10px;font-size:12px;font-family:var(--font);color:var(--dark);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 8px center;appearance:none;cursor:pointer;outline:none;transition:border-color .18s}
+.f-sel:focus,.f-sel:hover{border-color:var(--pink)}
+.f-divider{width:1px;height:22px;background:var(--g300)}
+.metric-grp{display:flex;gap:6px;margin-left:auto}
+.m-toggle{padding:5px 12px;border:1px solid var(--g300);border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;color:var(--g600);background:#fff;transition:all .18s;white-space:nowrap}
+.m-toggle.active{background:var(--pink);border-color:var(--pink);color:#fff}
+.m-toggle:hover:not(.active){border-color:var(--pink);color:var(--pink)}
+
+/* SECTION HEADING */
+.sec-head{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:var(--g400);margin-bottom:12px;display:flex;align-items:center;gap:4px}
+.sec-head::after{content:'';flex:1;height:1px;background:var(--g200)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+.kpi-card{background:#fff;border:1px solid var(--g300);border-radius:8px;padding:15px 16px;position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s;cursor:default}
+.kpi-card:hover{box-shadow:0 4px 18px rgba(0,0,0,0.07);transform:translateY(-1px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--pink);opacity:0;transition:opacity .2s}
+.kpi-card:hover::before{opacity:1}
+.kpi-card.feat{border-color:var(--pink);background:linear-gradient(135deg,#fff 0%,#fde8eb 100%)}
+.kpi-card.feat::before{opacity:1}
+.kpi-ico{font-size:18px;margin-bottom:8px}
+.kpi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--g400);margin-bottom:3px}
+.kpi-val{font-size:22px;font-weight:700;letter-spacing:-.5px;color:var(--dark);line-height:1;margin-bottom:5px}
+.kpi-card.feat .kpi-val{color:var(--pink)}
+.kpi-trend{font-size:10px;font-weight:600;color:var(--g400)}
+.trend-up{color:#16a34a}.trend-dn{color:var(--pink)}.trend-n{color:var(--g400)}
+
+/* CHARTS */
+.chart-grid-2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:16px}
+.chart-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+.chart-grid-2c{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--g300);border-radius:8px;padding:18px 20px}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;color:var(--dark);letter-spacing:-.2px;margin-bottom:2px}
+.card-sub{font-size:10px;color:var(--g600)}
+.card-badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;background:var(--pink-light);color:var(--pink)}
+
+/* TABLE */
+.tbl-card{background:#fff;border:1px solid var(--g300);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.tbl-head{padding:16px 20px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tbl-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px}
+.tbl-sub{font-size:10px;color:var(--g600)}
+.tbl-actions{display:flex;gap:8px;flex-shrink:0}
+.tbl-btn{padding:5px 12px;border:1px solid var(--g300);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:var(--dark);transition:all .18s}
+.tbl-btn:hover{border-color:var(--pink);color:var(--pink)}
+.tbl-btn.p{background:var(--pink);border-color:var(--pink);color:#fff}
+.tbl-btn.p:hover{background:var(--pink-dark)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--g100);padding:9px 13px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--g600);border-bottom:1px solid var(--g200);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:first-child{padding-left:18px}
+thead th:hover{color:var(--pink)}
+thead th.sort-asc::after{content:' ▲';color:var(--pink)}
+thead th.sort-desc::after{content:' ▼';color:var(--pink)}
+tbody tr{border-bottom:1px solid var(--g200);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--g100)}
+tbody td{padding:10px 13px;font-size:12px;color:var(--dark);white-space:nowrap}
+tbody td:first-child{padding-left:18px}
+.r-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex-shrink:0}
+.mini-bar-wrap{display:flex;align-items:center;gap:7px}
+.mini-bar-bg{flex:1;height:5px;background:var(--g200);border-radius:3px;overflow:hidden;min-width:60px}
+.mini-bar-fill{height:100%;background:var(--pink);border-radius:3px}
+.ctr-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.ctr-hi{background:#dcfce7;color:#16a34a}.ctr-md{background:#fef9c3;color:#ca8a04}.ctr-lo{background:#fee2e2;color:#dc2626}
+
+/* SPARKLINES */
+.spark-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--g200)}
+.spark-row:last-child{border-bottom:none}
+.spark-name{font-size:11px;font-weight:600;flex:1;padding-right:8px}
+.spark-bar-wrap{flex:2;margin:0 10px}
+.spark-bar-bg{height:5px;background:var(--g200);border-radius:3px;overflow:hidden}
+.spark-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.spark-val{font-size:11px;font-weight:700;min-width:68px;text-align:right}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:48px 20px;color:var(--g400)}
+.empty-state .ico{font-size:40px;margin-bottom:12px}
+.empty-state p{font-size:13px}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;border:1px solid var(--g300);border-radius:4px;padding:7px 12px 7px 34px;font-size:12px;font-family:var(--font);outline:none;transition:border-color .18s}
+.search-input:focus{border-color:var(--pink)}
+.search-ico{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--g400)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:6px;padding:12px 18px;border-top:1px solid var(--g200);justify-content:flex-end}
+.page-btn{padding:4px 10px;border:1px solid var(--g300);border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;background:#fff;color:var(--dark);transition:all .18s}
+.page-btn:hover:not(:disabled){border-color:var(--pink);color:var(--pink)}
+.page-btn.active{background:var(--pink);border-color:var(--pink);color:#fff}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-info{font-size:11px;color:var(--g600);margin-right:auto}
+
+/* MODAL OVERLAY */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;width:480px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700;letter-spacing:-.2px}
+.modal-close{font-size:20px;cursor:pointer;color:var(--g400);line-height:1;transition:color .18s}
+.modal-close:hover{color:var(--dark)}
+.modal-body{padding:22px}
+.modal-row{display:flex;flex-direction:column;gap:4px;margin-bottom:16px}
+.modal-row label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600)}
+.modal-row select,.modal-row input[type=date]{width:100%;border:1px solid var(--g300);border-radius:4px;padding:7px 10px;font-size:13px;font-family:var(--font);outline:none;transition:border-color .18s}
+.modal-row select:focus,.modal-row input:focus{border-color:var(--pink)}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--g200);display:flex;justify-content:flex-end;gap:10px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:11px 18px;border-radius:6px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;max-width:300px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:#16a34a}
+.toast.error{background:var(--pink)}
+
+/* ANIMATIONS */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.kpi-card{animation:fadeIn .35s ease both}
+.kpi-card:nth-child(1){animation-delay:.04s}
+.kpi-card:nth-child(2){animation-delay:.08s}
+.kpi-card:nth-child(3){animation-delay:.12s}
+.kpi-card:nth-child(4){animation-delay:.16s}
+.kpi-card:nth-child(5){animation-delay:.20s}
+.kpi-card:nth-child(6){animation-delay:.24s}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--g200)}
+::-webkit-scrollbar-thumb{background:var(--g400);border-radius:3px}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .chart-grid-2{grid-template-columns:1fr}
+  .chart-grid-3{grid-template-columns:1fr}
+  .chart-grid-2c{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar">
+  <div class="logo-wrap" style="padding:0;border-bottom:1px solid rgba(255,255,255,0.08);overflow:hidden">
+    <!-- PERFORMENA actual logo PNG -->
+     <img src="pmn_logo.png" style="width: 80%;margin: 0 auto;display: block;padding: 4px;" alt="">
+    <!-- Client: Danube Home -->
+    <div style="padding:12px 14px 14px">
+      <div style="font-size:8px;letter-spacing:1.8px;color:rgba(255,255,255,0.28);margin-bottom:8px;text-transform:uppercase;font-weight:600">Analytics for</div>
+      <div style="background:#ffffff;border-radius:6px;padding:8px 12px;display:flex;align-items:center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="auto" style="display:block" viewBox="0 0 246.254 17.995">
+  <g id="DhLogoEn" transform="translate(-16.51 -45.093)">
+    <path id="E" d="M1617.084,485.627h16.709l-.78,3.6h-9.61l-.683,3.149h9.007l-.779,3.6h-9.009l-.683,3.147h9.706l-.779,3.6h-16.806Z" transform="translate(-1371.03 -440.082)" fill="#b72200"/>
+    <path id="M" d="M1416.783,485.627h11.132l1.16,11.46h.049l6.01-11.46h11.179l-3.706,17.094H1435.8l2.79-12.856h-.05l-7.569,12.856h-7.1l-1.7-12.856h-.073l-2.787,12.856h-6.232Z" transform="translate(-1202.213 -440.082)" fill="#b72200"/>
+    <path id="O" d="M1284.195,497.8c-2.269,1.777-5.544,2.96-10.037,2.96-8.523,0-10.82-3.882-9.711-9a10.765,10.765,0,0,1,4.9-7.1c1.917-1.161,4.225-1.895,8.718-1.895,8.522,0,10.82,3.883,9.714,9a10.186,10.186,0,0,1-3.58,6.037m-6.976-11.152c-2.415,0-4.526,1.611-5.287,5.114s.655,5.115,3.069,5.115,4.527-1.61,5.287-5.115-.654-5.114-3.068-5.114" transform="translate(-1076.731 -437.67)" fill="#b72200"/>
+    <path id="H" d="M1106.7,485.627h6.539l-1.369,6.324h8.068l1.368-6.324h7.341l-3.706,17.094H1117.6l1.431-6.6h-8.066l-1.434,6.6h-6.542Z" transform="translate(-940.872 -440.082)" fill="#b72200"/>
+    <path id="N" d="M488.871,485.61l-3.079,17.127h-7.928l-8.9-10.842-1.948,10.842h-4.692L465.4,485.61h6.94l9.73,11.707,2.1-11.707Z" transform="translate(-400.924 -440.068)" fill="#b72200"/>
+    <path id="U" d="M658.673,485.61,656.606,497.1c-.7,3.94-5.016,5.909-11.628,5.909-8.643,0-11.029-1.97-10.321-5.909l2.063-11.492h7.535l-1.9,10.578c-.277,1.506-.131,2.543.424,3.091s1.713.833,3.471.833q5.118,0,5.853-4.068l1.88-10.434Z" transform="translate(-546.067 -440.071)" fill="#b72200"/>
+    <path id="B" d="M785.534,502.737l3.085-17.127h12.3c5.947,0,7.927,1.395,7.424,4.2-.361,1.994-2.38,3.266-6.071,3.834q6.325.853,5.666,4.542-.813,4.556-9.551,4.555ZM795,492h2.326c2.143,0,3.348-.76,3.593-2.132.2-1.133-.808-1.79-3.08-1.79h-2.133Zm-1.481,8.258h2.148c2.821,0,4.342-.661,4.725-2.785.434-2.434-.921-3-3.814-3h-2.024Z" transform="translate(-673.325 -440.071)" fill="#b72200"/>
+    <path id="E-2" data-name="E" d="M957.756,485.61l-.6,3.333h-9.3l-.646,3.566h7.821l-.594,3.341H946.6l-.635,3.551h9.305l-.6,3.336h-16.83l3.074-17.127Z" transform="translate(-801.686 -440.068)" fill="#b72200"/>
+    <path id="A" d="M329.587,502.737h7.578l-4.152-17.127h-7.7l-10.764,17.127h4.028l2.067-3.336h8.188ZM322.117,497l4.506-7.291,1.66,7.291Z" transform="translate(-276.375 -440.071)" fill="#b72200"/>
+    <path id="D" d="M190.9,483.551l-2.772.013-.431,2.509,1.472.005c4.28,0,4.291,3.452,3.792,6.219s-.994,3.579-1.9,4.635a5.139,5.139,0,0,1-4.131,1.588h-2.024l2.765-14.929h-2.8l-.809,5h-2.341l-.8,4.4H178.36l-1.606,8.065h10.573q12.152,0,13.722-8.732,1.567-8.775-10.149-8.768" transform="translate(-160.244 -438.335)" fill="#b72200"/>
+  </g>
+</svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-scroll">
+    <div class="nav-group">
+      <div class="nav-section-lbl">Analytics</div>
+      <div class="nav-item active" data-page="overview">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="8" width="3" height="7" rx="1" fill="#E6586C"/><rect x="6" y="5" width="3" height="10" rx="1" fill="#E6586C" opacity=".7"/><rect x="11" y="2" width="3" height="13" rx="1" fill="#E6586C" opacity=".5"/></svg></span>Campaign Overview
+      </div>
+      <div class="nav-item" data-page="geo">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="3.5" stroke="#E6586C" stroke-width="1.5"/><path d="M8 2.5V9.5" stroke="#E6586C" stroke-width="1.2"/><path d="M4.5 6H11.5" stroke="#E6586C" stroke-width="1.2"/><path d="M8 9.5 C8 9.5 4 12 4 14 H12 C12 12 8 9.5 8 9.5Z" fill="#E6586C" opacity=".3"/></svg></span>Geographic Breakdown
+      </div>
+      <div class="nav-item" data-page="formats">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6.5" height="6.5" rx="1.5" fill="#E6586C" opacity=".9"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="1.5" fill="#E6586C" opacity=".5"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="1.5" fill="#E6586C" opacity=".5"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1.5" fill="#E6586C" opacity=".7"/></svg></span>Creative Formats
+      </div>
+      <!-- <div class="nav-item" data-page="trends">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="1,13 5,8 9,10 14,3" stroke="#E6586C" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" fill="none"/><circle cx="14" cy="3" r="1.5" fill="#E6586C"/></svg></span>Time Series Trends
+      </div> -->
+    </div>
+    <div class="nav-group">
+      <div class="nav-section-lbl">Reporting</div>
+      <div class="nav-item" data-page="report-builder">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="2" stroke="#E6586C" stroke-width="1.5"/><line x1="5" y1="5.5" x2="11" y2="5.5" stroke="#E6586C" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="#E6586C" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="10.5" x2="8.5" y2="10.5" stroke="#E6586C" stroke-width="1.3" stroke-linecap="round"/></svg></span>Report Builder
+      </div>
+      <div class="nav-item" data-page="export">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1V10M8 1L5 4M8 1L11 4" stroke="#E6586C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11V13C2 14.1 2.9 15 4 15H12C13.1 15 14 14.1 14 13V11" stroke="#E6586C" stroke-width="1.6" stroke-linecap="round"/></svg></span>Export Data
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-foot">
+    <div style="font-size:10px;color:rgba(255,255,255,0.35);line-height:1.6;letter-spacing:0.2px">
+      ©&nbsp;2026&nbsp;<strong style="color:rgba(255,255,255,0.55)">Performena DMCC</strong><br>All rights reserved.
+    </div>
+  </div>
+
+</nav>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Campaign Analytics Dashboard</div>
+      
+    </div>
+    <div class="topbar-spacer"></div>
+    <!-- <button class="tb-btn" id="btn-report-builder"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="5.5" x2="11" y2="5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><line x1="5" y1="10.5" x2="8.5" y2="10.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Report Builder</button> -->
+    <button class="tb-btn" id="btn-import-data"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 15V6M8 6L5 9M8 6L11 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 5V3C2 1.9 2.9 1 4 1H12C13.1 1 14 1.9 14 3V5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Import Data</button>
+    <button class="tb-btn" id="btn-export-csv"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 1V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 11V13C2 14.1 2.9 15 4 15H12C13.1 15 14 14.1 14 13V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg> Export CSV</button>
+    <input type="file" id="file-input" accept=".json,.csv" style="display:none">
+    <button class="tb-btn primary" id="btn-generate-report"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M9 1L3 9H8L7 15L13 7H8L9 1Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg> Generate Report</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ══ PAGE: OVERVIEW ══ -->
+    <div class="page active" id="page-overview">
+      <!-- Filters -->
+      <div class="filter-bar">
+        <span class="filter-lbl">FILTERS:</span>
+        <select class="f-sel" id="ov-campaign">
+          <option value="">All Campaigns</option>
+          <option value="Awareness">Awareness</option>
+          <option value="Eid Sale">Eid Sale</option>
+          <option value="Pay Week">Pay Week</option>
+          <option value="Other">Other</option>
+        </select>
+        <select class="f-sel" id="ov-region">
+          <option value="">All Regions</option>
+        </select>
+        <select class="f-sel" id="ov-format">
+          <option value="">All Formats</option>
+        </select>
+        <select class="f-sel" id="ov-month">
+          <option value="">All Months</option>
+          <option value="2025-10">Oct 2025</option>
+          <option value="2025-11">Nov 2025</option>
+          <option value="2025-12">Dec 2025</option>
+          <option value="2026-01">Jan 2026</option>
+          <option value="2026-02">Feb 2026</option>
+          <option value="2026-03">Mar 2026</option>
+          <option value="2026-04">Apr 2026</option>
+          <option value="2026-05">May 2026</option>
+          <option value="2026-06">Jun 2026</option>
+        </select>
+        <div class="f-divider"></div>
+        <div class="metric-grp">
+          <button class="m-toggle active" data-metric="i">Impressions</button>
+          <button class="m-toggle" data-metric="cl">Clicks</button>
+          <button class="m-toggle" data-metric="sp">Spend</button>
+          <button class="m-toggle" data-metric="ctr">CTR</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Key Performance Indicators</div>
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- Charts Row 1 -->
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Performance Trends</div>
+      <div class="chart-grid-2">
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Monthly Impressions &amp; Spend</div><div class="card-sub">All campaigns · filtered data</div></div>
+            <div class="card-badge" id="live-badge">Live</div>
+          </div>
+          <canvas id="ch-trend" height="190"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Spend by Region</div><div class="card-sub">Budget allocation %</div></div>
+          </div>
+          <div style="display:flex;justify-content:center">
+            <canvas id="ch-donut" height="220" width="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Creative &amp; Format Analysis</div>
+      <div class="chart-grid-3">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Top Formats</div><div class="card-sub">By <span id="fmt-metric-label">impressions</span></div></div></div>
+          <canvas id="ch-format" height="210"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">CTR by Region</div><div class="card-sub">Click-through comparison</div></div></div>
+          <canvas id="ch-ctr" height="210"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Monthly Clicks</div><div class="card-sub">Engagement volume</div></div></div>
+          <canvas id="ch-clicks" height="210"></canvas>
+        </div>
+      </div>
+
+      <!-- Region Table -->
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Regional Performance Breakdown</div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div>
+            <div class="tbl-title">All Regions — Campaign Summary</div>
+            <div class="tbl-sub" id="tbl-sub-text">Showing filtered results</div>
+          </div>
+          <div class="tbl-actions">
+            <button class="tbl-btn" id="btn-tbl-csv">⬇ CSV</button>
+            <button class="tbl-btn p" id="btn-clear-filters">✕ Clear Filters</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="reg">Region</th>
+                <th data-sort="i">Impressions</th>
+                <th>Share %</th>
+                <th data-sort="cl">Clicks</th>
+                <th data-sort="ctr">CTR</th>
+                <th data-sort="sp">Spend</th>
+                <th data-sort="cpm">CPM</th>
+                <th data-sort="cpc">CPC</th>
+              </tr>
+            </thead>
+            <tbody id="region-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="reg-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: GEO ══ -->
+    <div class="page" id="page-geo">
+      <div class="filter-bar">
+        <span class="filter-lbl">FILTERS:</span>
+        <select class="f-sel" id="geo-campaign">
+          <option value="">All Campaigns</option>
+          <option value="Awareness">Awareness</option>
+          <option value="Eid Sale">Eid Sale</option>
+          <option value="Pay Week">Pay Week</option>
+        </select>
+        <select class="f-sel" id="geo-month">
+          <option value="">All Months</option>
+          <option value="2025-10">Oct 2025</option>
+          <option value="2025-11">Nov 2025</option>
+          <option value="2025-12">Dec 2025</option>
+          <option value="2026-01">Jan 2026</option>
+          <option value="2026-02">Feb 2026</option>
+          <option value="2026-03">Mar 2026</option>
+          <option value="2026-04">Apr 2026</option>
+          <option value="2026-05">May 2026</option>
+          <option value="2026-06">Jun 2026</option>
+        </select>
+      </div>
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Geographic Performance — All Markets</div>
+      <div class="chart-grid-2c" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Impressions by Region</div><div class="card-sub">Volume comparison</div></div></div>
+          <canvas id="ch-geo-imp" height="280"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Spend by Region</div><div class="card-sub">Budget distribution</div></div></div>
+          <canvas id="ch-geo-spend" height="280"></canvas>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div>
+            <div class="tbl-title">Detailed Regional Metrics</div>
+            <div class="tbl-sub">All markets · filtered by selections above</div>
+          </div>
+          <div class="tbl-actions"><button class="tbl-btn" id="btn-geo-csv">⬇ Export CSV</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>Region</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>Reach</th><th>Spend</th><th>CPM</th><th>CPC</th>
+            </tr></thead>
+            <tbody id="geo-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: FORMATS ══ -->
+    <div class="page" id="page-formats">
+      <div class="filter-bar">
+        <span class="filter-lbl">FILTERS:</span>
+        <select class="f-sel" id="fmt-campaign">
+          <option value="">All Campaigns</option>
+          <option value="Awareness">Awareness</option>
+          <option value="Eid Sale">Eid Sale</option>
+          <option value="Pay Week">Pay Week</option>
+        </select>
+        <select class="f-sel" id="fmt-region">
+          <option value="">All Regions</option>
+        </select>
+      </div>
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Creative Format Performance</div>
+      <div class="chart-grid-2c" style="margin-bottom:16px">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Impressions by Format</div><div class="card-sub">Top 10 creative formats</div></div></div>
+          <canvas id="ch-fmt-imp" height="280"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">CTR by Format</div><div class="card-sub">Performance efficiency</div></div></div>
+          <canvas id="ch-fmt-ctr" height="280"></canvas>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div><div class="tbl-title">Format Performance Table</div><div class="tbl-sub">All creative formats · ranked by impressions</div></div>
+          <div class="tbl-actions"><button class="tbl-btn" id="btn-fmt-csv">⬇ Export CSV</button></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Format</th><th>Impressions</th><th>Clicks</th><th>CTR</th><th>Spend</th><th>CPM</th></tr></thead>
+            <tbody id="fmt-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: TRENDS ══ -->
+    <div class="page" id="page-trends">
+      <div class="filter-bar">
+        <span class="filter-lbl">FILTERS:</span>
+        <select class="f-sel" id="tr-region"><option value="">All Regions</option></select>
+        <select class="f-sel" id="tr-format"><option value="">All Formats</option></select>
+        <div class="f-divider"></div>
+        <div class="metric-grp">
+          <button class="m-toggle active" data-tr-metric="i">Impressions</button>
+          <button class="m-toggle" data-tr-metric="cl">Clicks</button>
+          <button class="m-toggle" data-tr-metric="sp">Spend</button>
+        </div>
+      </div>
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Time Series Analysis</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head">
+          <div><div class="card-title" id="tr-chart-title">Monthly Impressions Trend</div><div class="card-sub">Oct 2025 – Jun 2026 · all campaigns</div></div>
+        </div>
+        <canvas id="ch-trend-main" height="240"></canvas>
+      </div>
+      <div class="chart-grid-3">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Weekly Distribution</div><div class="card-sub">Performance by campaign type</div></div></div>
+          <canvas id="ch-camp-dist" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">CPM Trend</div><div class="card-sub">Cost per thousand impressions</div></div></div>
+          <canvas id="ch-cpm-trend" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">CPC Trend</div><div class="card-sub">Cost per click over time</div></div></div>
+          <canvas id="ch-cpc-trend" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: REPORT BUILDER ══ -->
+    <div class="page" id="page-report-builder">
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Report Builder</div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-head"><div><div class="card-title">Configure Your Report</div><div class="card-sub">Select dimensions, metrics, and date range</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:10px">Group By</div>
+            <div style="display:flex;flex-direction:column;gap:8px" id="rb-group-by">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="reg"> Region</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="campaign"> Campaign Name</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="ct"> Campaign Type</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="f"> Creative Format</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="m"> Month</label>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:10px">Metrics</div>
+            <div style="display:flex;flex-direction:column;gap:8px" id="rb-metrics">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="i"> Impressions</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="cl"> Clicks</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="ctr"> CTR</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="sp"> Spend</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="cpm"> CPM</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="cpc"> CPC</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="rc"> Reach</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="viewability"> Viewability</label>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:20px">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Campaign Filter</div>
+            <select class="f-sel" style="width:100%" id="rb-campaign">
+              <option value="">All Campaigns</option>
+              <option value="Awareness">Awareness</option>
+              <option value="Eid Sale">Eid Sale</option>
+              <option value="Pay Week">Pay Week</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Region Filter</div>
+            <select class="f-sel" style="width:100%" id="rb-region"><option value="">All Regions</option></select>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Month Filter</div>
+            <select class="f-sel" style="width:100%" id="rb-month">
+              <option value="">All Months</option>
+              <option value="2025-10">Oct 2025</option>
+              <option value="2025-11">Nov 2025</option>
+              <option value="2025-12">Dec 2025</option>
+              <option value="2026-01">Jan 2026</option>
+              <option value="2026-02">Feb 2026</option>
+              <option value="2026-03">Mar 2026</option>
+              <option value="2026-04">Apr 2026</option>
+              <option value="2026-05">May 2026</option>
+              <option value="2026-06">Jun 2026</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button class="tbl-btn p" id="rb-generate" style="padding:8px 20px;font-size:13px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M9 1L3 9H8L7 15L13 7H8L9 1Z" fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/></svg> Generate Report</button>
+          <button class="tbl-btn" id="rb-clear">✕ Clear</button>
+          <button class="tbl-btn" id="rb-export" style="margin-left:auto">⬇ Export Report CSV</button>
+        </div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-head">
+          <div><div class="tbl-title">Report Results</div><div class="tbl-sub" id="rb-sub">Configure filters above and click Generate Report</div></div>
+        </div>
+        <div class="tbl-wrap"><table><thead id="rb-thead"></thead><tbody id="rb-tbody"></tbody></table></div>
+        <div class="pagination" id="rb-pagination"></div>
+      </div>
+    </div>
+
+    <!-- ══ PAGE: EXPORT ══ -->
+    <div class="page" id="page-export">
+      <div class="sec-head"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:inline-block;margin-right:6px;flex-shrink:0"><path d="M6 0L7.5 4.5L12 6L7.5 7.5L6 12L4.5 7.5L0 6L4.5 4.5Z" fill="#E6586C"/></svg> Export Data</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Quick Export</div><div class="card-sub">Download pre-configured datasets</div></div></div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+            <button class="tbl-btn p" style="justify-content:flex-start;gap:10px;padding:12px 16px;font-size:13px" data-export="all">
+              📊 Full Dataset (all 2,811 records)
+            </button>
+            <button class="tbl-btn" style="justify-content:flex-start;gap:10px;padding:12px 16px;font-size:13px" data-export="regions">
+              📍 Regional Summary
+            </button>
+            <button class="tbl-btn" style="justify-content:flex-start;gap:10px;padding:12px 16px;font-size:13px" data-export="formats">
+              🎨 Format Performance
+            </button>
+            <button class="tbl-btn" style="justify-content:flex-start;gap:10px;padding:12px 16px;font-size:13px" data-export="monthly">
+              📅 Monthly Aggregated
+            </button>
+            <button class="tbl-btn" style="justify-content:flex-start;gap:10px;padding:12px 16px;font-size:13px" data-export="top">
+              ⭐ Top 50 Performers
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Dataset Info</div><div class="card-sub">Source: Danube_Mega_Sheet.xlsx</div></div></div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--g200)">
+              <span style="font-size:12px;color:var(--g600)">Total Records</span>
+              <span style="font-size:13px;font-weight:700">2,811</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--g200)">
+              <span style="font-size:12px;color:var(--g600)">Date Range</span>
+              <span style="font-size:13px;font-weight:700">Oct 2025 – Jun 2026</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--g200)">
+              <span style="font-size:12px;color:var(--g600)">Regions</span>
+              <span style="font-size:13px;font-weight:700">13 markets</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--g200)">
+              <span style="font-size:12px;color:var(--g600)">Formats</span>
+              <span style="font-size:13px;font-weight:700">23 creative types</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:12px;color:var(--g600)">Total Spend</span>
+              <span style="font-size:13px;font-weight:700;color:var(--pink)">$527,414</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .content -->
+
+  <!-- FOOTER -->
+  <div style="background:#fff;border-top:1px solid var(--g300);padding:12px 26px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--g400)">
+    <div><span style="display:inline-flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 170 36" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:16px;width:auto">
+        <rect x="0" y="0" width="6" height="36" rx="1" fill="#E6586C"/>
+        <path d="M0 0 L14 0 Q22 0 22 9 Q22 18 14 18 L6 18 L6 0 Z" fill="#E6586C"/>
+        <path d="M6 3 L13 3 Q18 3 18 9 Q18 15 13 15 L6 15 Z" fill="#1e1e1e"/>
+      </svg>
+      <strong style="color:var(--pink)">PERFORMENA</strong> Digital.Global — Programmatic Analytics Platform for <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px"><svg xmlns="http://www.w3.org/2000/svg" height="11" width="auto" viewBox="0 0 246.254 17.995">
+  <g id="DhLogoEn" transform="translate(-16.51 -45.093)">
+    <path id="E" d="M1617.084,485.627h16.709l-.78,3.6h-9.61l-.683,3.149h9.007l-.779,3.6h-9.009l-.683,3.147h9.706l-.779,3.6h-16.806Z" transform="translate(-1371.03 -440.082)" fill="white"/>
+    <path id="M" d="M1416.783,485.627h11.132l1.16,11.46h.049l6.01-11.46h11.179l-3.706,17.094H1435.8l2.79-12.856h-.05l-7.569,12.856h-7.1l-1.7-12.856h-.073l-2.787,12.856h-6.232Z" transform="translate(-1202.213 -440.082)" fill="white"/>
+    <path id="O" d="M1284.195,497.8c-2.269,1.777-5.544,2.96-10.037,2.96-8.523,0-10.82-3.882-9.711-9a10.765,10.765,0,0,1,4.9-7.1c1.917-1.161,4.225-1.895,8.718-1.895,8.522,0,10.82,3.883,9.714,9a10.186,10.186,0,0,1-3.58,6.037m-6.976-11.152c-2.415,0-4.526,1.611-5.287,5.114s.655,5.115,3.069,5.115,4.527-1.61,5.287-5.115-.654-5.114-3.068-5.114" transform="translate(-1076.731 -437.67)" fill="white"/>
+    <path id="H" d="M1106.7,485.627h6.539l-1.369,6.324h8.068l1.368-6.324h7.341l-3.706,17.094H1117.6l1.431-6.6h-8.066l-1.434,6.6h-6.542Z" transform="translate(-940.872 -440.082)" fill="white"/>
+    <path id="N" d="M488.871,485.61l-3.079,17.127h-7.928l-8.9-10.842-1.948,10.842h-4.692L465.4,485.61h6.94l9.73,11.707,2.1-11.707Z" transform="translate(-400.924 -440.068)" fill="white"/>
+    <path id="U" d="M658.673,485.61,656.606,497.1c-.7,3.94-5.016,5.909-11.628,5.909-8.643,0-11.029-1.97-10.321-5.909l2.063-11.492h7.535l-1.9,10.578c-.277,1.506-.131,2.543.424,3.091s1.713.833,3.471.833q5.118,0,5.853-4.068l1.88-10.434Z" transform="translate(-546.067 -440.071)" fill="white"/>
+    <path id="B" d="M785.534,502.737l3.085-17.127h12.3c5.947,0,7.927,1.395,7.424,4.2-.361,1.994-2.38,3.266-6.071,3.834q6.325.853,5.666,4.542-.813,4.556-9.551,4.555ZM795,492h2.326c2.143,0,3.348-.76,3.593-2.132.2-1.133-.808-1.79-3.08-1.79h-2.133Zm-1.481,8.258h2.148c2.821,0,4.342-.661,4.725-2.785.434-2.434-.921-3-3.814-3h-2.024Z" transform="translate(-673.325 -440.071)" fill="white"/>
+    <path id="E-2" data-name="E" d="M957.756,485.61l-.6,3.333h-9.3l-.646,3.566h7.821l-.594,3.341H946.6l-.635,3.551h9.305l-.6,3.336h-16.83l3.074-17.127Z" transform="translate(-801.686 -440.068)" fill="white"/>
+    <path id="A" d="M329.587,502.737h7.578l-4.152-17.127h-7.7l-10.764,17.127h4.028l2.067-3.336h8.188ZM322.117,497l4.506-7.291,1.66,7.291Z" transform="translate(-276.375 -440.071)" fill="white"/>
+    <path id="D" d="M190.9,483.551l-2.772.013-.431,2.509,1.472.005c4.28,0,4.291,3.452,3.792,6.219s-.994,3.579-1.9,4.635a5.139,5.139,0,0,1-4.131,1.588h-2.024l2.765-14.929h-2.8l-.809,5h-2.341l-.8,4.4H178.36l-1.606,8.065h10.573q12.152,0,13.722-8.732,1.567-8.775-10.149-8.768" transform="translate(-160.244 -438.335)" fill="white"/>
+  </g>
+</svg></span>
+    </span></div>
+    <div><svg xmlns="http://www.w3.org/2000/svg" height="13" width="auto" style="display:inline-block;vertical-align:middle" viewBox="0 0 246.254 17.995">
+  <g id="DhLogoEn" transform="translate(-16.51 -45.093)">
+    <path id="E" d="M1617.084,485.627h16.709l-.78,3.6h-9.61l-.683,3.149h9.007l-.779,3.6h-9.009l-.683,3.147h9.706l-.779,3.6h-16.806Z" transform="translate(-1371.03 -440.082)" fill="rgba(255,255,255,0.55)"/>
+    <path id="M" d="M1416.783,485.627h11.132l1.16,11.46h.049l6.01-11.46h11.179l-3.706,17.094H1435.8l2.79-12.856h-.05l-7.569,12.856h-7.1l-1.7-12.856h-.073l-2.787,12.856h-6.232Z" transform="translate(-1202.213 -440.082)" fill="rgba(255,255,255,0.55)"/>
+    <path id="O" d="M1284.195,497.8c-2.269,1.777-5.544,2.96-10.037,2.96-8.523,0-10.82-3.882-9.711-9a10.765,10.765,0,0,1,4.9-7.1c1.917-1.161,4.225-1.895,8.718-1.895,8.522,0,10.82,3.883,9.714,9a10.186,10.186,0,0,1-3.58,6.037m-6.976-11.152c-2.415,0-4.526,1.611-5.287,5.114s.655,5.115,3.069,5.115,4.527-1.61,5.287-5.115-.654-5.114-3.068-5.114" transform="translate(-1076.731 -437.67)" fill="rgba(255,255,255,0.55)"/>
+    <path id="H" d="M1106.7,485.627h6.539l-1.369,6.324h8.068l1.368-6.324h7.341l-3.706,17.094H1117.6l1.431-6.6h-8.066l-1.434,6.6h-6.542Z" transform="translate(-940.872 -440.082)" fill="rgba(255,255,255,0.55)"/>
+    <path id="N" d="M488.871,485.61l-3.079,17.127h-7.928l-8.9-10.842-1.948,10.842h-4.692L465.4,485.61h6.94l9.73,11.707,2.1-11.707Z" transform="translate(-400.924 -440.068)" fill="rgba(255,255,255,0.55)"/>
+    <path id="U" d="M658.673,485.61,656.606,497.1c-.7,3.94-5.016,5.909-11.628,5.909-8.643,0-11.029-1.97-10.321-5.909l2.063-11.492h7.535l-1.9,10.578c-.277,1.506-.131,2.543.424,3.091s1.713.833,3.471.833q5.118,0,5.853-4.068l1.88-10.434Z" transform="translate(-546.067 -440.071)" fill="rgba(255,255,255,0.55)"/>
+    <path id="B" d="M785.534,502.737l3.085-17.127h12.3c5.947,0,7.927,1.395,7.424,4.2-.361,1.994-2.38,3.266-6.071,3.834q6.325.853,5.666,4.542-.813,4.556-9.551,4.555ZM795,492h2.326c2.143,0,3.348-.76,3.593-2.132.2-1.133-.808-1.79-3.08-1.79h-2.133Zm-1.481,8.258h2.148c2.821,0,4.342-.661,4.725-2.785.434-2.434-.921-3-3.814-3h-2.024Z" transform="translate(-673.325 -440.071)" fill="rgba(255,255,255,0.55)"/>
+    <path id="E-2" data-name="E" d="M957.756,485.61l-.6,3.333h-9.3l-.646,3.566h7.821l-.594,3.341H946.6l-.635,3.551h9.305l-.6,3.336h-16.83l3.074-17.127Z" transform="translate(-801.686 -440.068)" fill="rgba(255,255,255,0.55)"/>
+    <path id="A" d="M329.587,502.737h7.578l-4.152-17.127h-7.7l-10.764,17.127h4.028l2.067-3.336h8.188ZM322.117,497l4.506-7.291,1.66,7.291Z" transform="translate(-276.375 -440.071)" fill="rgba(255,255,255,0.55)"/>
+    <path id="D" d="M190.9,483.551l-2.772.013-.431,2.509,1.472.005c4.28,0,4.291,3.452,3.792,6.219s-.994,3.579-1.9,4.635a5.139,5.139,0,0,1-4.131,1.588h-2.024l2.765-14.929h-2.8l-.809,5h-2.341l-.8,4.4H178.36l-1.606,8.065h10.573q12.152,0,13.722-8.732,1.567-8.775-10.149-8.768" transform="translate(-160.244 -438.335)" fill="rgba(255,255,255,0.55)"/>
+  </g>
+</svg> <span style="vertical-align:middle">· Danube_Mega_Sheet.xlsx · 2,811 records · Jun 2026</span></div>
+  </div>
+
+</div><!-- end .main -->
+</div><!-- end .layout -->
+
+<!-- MODAL: Report Config -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⚡ Generate Summary Report</div>
+      <div class="modal-close" id="modal-close">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <label>Campaign</label>
+        <select id="modal-campaign">
+          <option value="">All Campaigns</option>
+          <option value="Awareness">Awareness</option>
+          <option value="Eid Sale">Eid Sale</option>
+          <option value="Pay Week">Pay Week</option>
+        </select>
+      </div>
+      <div class="modal-row">
+        <label>Region</label>
+        <select id="modal-region"><option value="">All Regions</option></select>
+      </div>
+      <div class="modal-row">
+        <label>Month</label>
+        <select id="modal-month">
+          <option value="">All Months</option>
+          <option value="2025-10">Oct 2025</option>
+          <option value="2025-11">Nov 2025</option>
+          <option value="2025-12">Dec 2025</option>
+          <option value="2026-01">Jan 2026</option>
+          <option value="2026-02">Feb 2026</option>
+          <option value="2026-03">Mar 2026</option>
+          <option value="2026-04">Apr 2026</option>
+          <option value="2026-05">May 2026</option>
+          <option value="2026-06">Jun 2026</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tbl-btn" id="modal-cancel">Cancel</button>
+      <button class="tbl-btn p" id="modal-confirm">Generate &amp; Navigate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Data Modal -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📊 Import Data</div>
+      <div class="modal-close" id="import-modal-close">✕</div>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:10px;margin-bottom:15px;">
+        <button class="tbl-btn" id="import-tab-file" style="flex:1;background:var(--pink);color:white;">Upload File</button>
+        <button class="tbl-btn" id="import-tab-gsheet" style="flex:1;">Google Sheets</button>
+      </div>
+      
+      <!-- File Upload Tab -->
+      <div id="import-file-content">
+        <div class="modal-row">
+          <label>Upload CSV or JSON File</label>
+          <input type="file" id="modal-file-input" accept=".csv,.json" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:8px;">
+          Supported formats: CSV, JSON. Required columns: Date, Campaign, Creative Format, Region, Impressions, Clicks, Spends, Reach
+        </div>
+      </div>
+      
+      <!-- Google Sheets Tab -->
+      <div id="import-gsheet-content" style="display:none;">
+        <div class="modal-row">
+          <label>Paste Data or Google Sheets URL</label>
+          <textarea id="gsheet-data" placeholder="Copy data from Google Sheets (Ctrl+A, Ctrl+C) and paste here, OR paste your Google Sheets URL..." style="width:100%;height:150px;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:12px;font-family:monospace;resize:vertical;"></textarea>
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:8px;line-height:1.5;">
+          <strong>Option 1:</strong> Copy data from Google Sheets (Ctrl+A, Ctrl+C) and paste above<br>
+          <strong>Option 2:</strong> Paste your Google Sheets URL directly<br>
+          <strong>Required columns:</strong> Date, Campaign/Campaign Type, Creative Format, Region/Country, Impressions, Clicks, Spends, Reach
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="tbl-btn" id="import-modal-cancel">Cancel</button>
+      <button class="tbl-btn p" id="import-modal-import">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+let RAW_DATA = [];
+
+// Load default data from campaign_data.json
+fetch('campaign_data.json')
+  .then(response => response.json())
+  .then(data => {
+    RAW_DATA = data;
+    window.RAW_DATA = RAW_DATA;
+    
+    // Initialize regions and formats after data loads
+    window.ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].sort();
+    window.ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].sort();
+    
+    // Repopulate selects
+    ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
+    ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+    
+    // Update record count
+    document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
+    
+    // Initialize overview page
+    initOverviewPage();
+  })
+  .catch(err => {
+    console.error('Error loading default data:', err);
+    showToast('Error loading default data. Please import a JSON file.', 'error');
+  });;
+
+// ── HELPERS ────────────────────────────────────────────────────────────
+const PINK = '#E6586C', PURPLE = '#9D5A8B', DARK = '#2C2C2C';
+const PALETTE = ['#E6586C','#9D5A8B','#E8834E','#2CA8A8','#6C8EE6','#A8A82C','#2CA86C','#E6C658','#C658E6','#58C6E6','#E6A858','#58E6A8'];
+const MONTH_LABELS = {'2025-10':'Oct 25','2025-11':'Nov 25','2025-12':'Dec 25','2026-01':'Jan 26','2026-02':'Feb 26','2026-03':'Mar 26','2026-04':'Apr 26','2026-05':'May 26','2026-06':'Jun 26','2026-12':'Dec 26'};
+
+Chart.defaults.font.family = "Arial, sans-serif";
+Chart.defaults.color = '#888';
+
+let charts = {};
+
+function fmt(n, type = 'num') {
+  if (type === 'imp') return n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1000).toFixed(1)+'K' : n.toFixed(0);
+  if (type === 'clk') return n >= 1e3 ? (n/1000).toFixed(1)+'K' : n.toFixed(0);
+  if (type === 'usd') return '$'+(n/1000).toFixed(1)+'K';
+  if (type === 'pct') return n.toFixed(2)+'%';
+  return n.toLocaleString();
+}
+
+function filterData(opts = {}) {
+  return RAW_DATA.filter(r =>
+    (!opts.ct || r.ct === opts.ct) &&
+    (!opts.reg || r.reg === opts.reg) &&
+    (!opts.f || r.f === opts.f) &&
+    (!opts.m || r.m === opts.m)
+  );
+}
+
+function aggBy(data, key) {
+  const map = {};
+  data.forEach(r => {
+    const k = r[key] || 'Unknown';
+    if (!map[k]) map[k] = {i:0, cl:0, sp:0, rc:0, cnt:0};
+    map[k].i  += r.i;
+    map[k].cl += r.cl;
+    map[k].sp += r.sp;
+    map[k].rc += r.rc;
+    map[k].cnt++;
+  });
+  return Object.entries(map).map(([k, v]) => ({
+    key: k, ...v,
+    ctr: v.i > 0 ? v.cl/v.i*100 : 0,
+    cpm: v.i > 0 ? v.sp/v.i*1000 : 0,
+    cpc: v.cl > 0 ? v.sp/v.cl : 0,
+  }));
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function makeChart(id, config) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, config);
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => { t.className = 'toast'; }, 2800);
+}
+
+function downloadCSV(rows, filename) {
+  if (!rows.length) { showToast('No data to export', 'error'); return; }
+  const keys = Object.keys(rows[0]);
+  const csv = [keys.join(','), ...rows.map(r => keys.map(k => {
+    const v = r[k];
+    return typeof v === 'string' && v.includes(',') ? `"${v}"` : v;
+  }).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = filename;
+  a.click();
+  showToast('✓ CSV downloaded: ' + filename, 'success');
+}
+
+// ── POPULATE SELECTS ────────────────────────────────────────────────────
+let ALL_REGIONS = [];
+let ALL_FORMATS = [];
+
+function populateSelect(id, items, placeholder = '', keepFirst = true) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const current = el.value;
+  const firstOpt = keepFirst ? el.options[0] : null;
+  el.innerHTML = '';
+  if (firstOpt) el.appendChild(firstOpt);
+  items.forEach(v => {
+    if (v === undefined || v === null || v === '') return;
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    el.appendChild(o);
+  });
+  el.value = current;
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────
+const PAGES = ['overview','geo','formats','trends','report-builder','export'];
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const page = item.dataset.page;
+    switchPage(page);
+  });
+});
+
+function switchPage(page) {
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.toggle('active', p.id === 'page-' + page);
+  });
+  // init page on first visit
+  if (page === 'geo') initGeoPage();
+  if (page === 'formats') initFormatsPage();
+  if (page === 'trends') initTrendsPage();
+}
+
+// ── TOPBAR BUTTONS ─────────────────────────────────────────────────────
+document.getElementById('btn-report-builder').addEventListener('click', () => switchPage('report-builder'));
+
+// Import Data functionality
+document.getElementById('btn-import-data').addEventListener('click', () => {
+  document.getElementById('modal-import').classList.add('open');
+});
+
+// Modal close handlers
+document.getElementById('import-modal-close').addEventListener('click', () => {
+  document.getElementById('modal-import').classList.remove('open');
+});
+
+document.getElementById('import-modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-import').classList.remove('open');
+});
+
+// Tab switching
+document.getElementById('import-tab-file').addEventListener('click', () => {
+  document.getElementById('import-file-content').style.display = 'block';
+  document.getElementById('import-gsheet-content').style.display = 'none';
+  document.getElementById('import-tab-file').style.background = 'var(--pink)';
+  document.getElementById('import-tab-file').style.color = 'white';
+  document.getElementById('import-tab-gsheet').style.background = '';
+  document.getElementById('import-tab-gsheet').style.color = '';
+});
+
+document.getElementById('import-tab-gsheet').addEventListener('click', () => {
+  document.getElementById('import-file-content').style.display = 'none';
+  document.getElementById('import-gsheet-content').style.display = 'block';
+  document.getElementById('import-tab-gsheet').style.background = 'var(--pink)';
+  document.getElementById('import-tab-gsheet').style.color = 'white';
+  document.getElementById('import-tab-file').style.background = '';
+  document.getElementById('import-tab-file').style.color = '';
+});
+
+// Import button handler
+document.getElementById('import-modal-import').addEventListener('click', async () => {
+  const isFileTab = document.getElementById('import-file-content').style.display !== 'none';
+  
+  if (isFileTab) {
+    // Handle file upload
+    const fileInput = document.getElementById('modal-file-input');
+    const file = fileInput.files[0];
+    if (!file) {
+      showToast('Please select a file to import', 'error');
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        let importedData;
+        const fileContent = event.target.result;
+        const fileName = file.name.toLowerCase();
+        
+        if (fileName.endsWith('.json')) {
+          importedData = JSON.parse(fileContent);
+          if (!Array.isArray(importedData)) {
+            throw new Error('JSON data must be an array');
+          }
+          
+          const requiredFields = ['m', 'ct', 'f', 'reg', 'i', 'cl', 'sp', 'rc'];
+          const isValid = importedData.every(row => 
+            requiredFields.every(field => field in row)
+          );
+          
+          if (!isValid) {
+            throw new Error('JSON must contain fields: m, ct, f, reg, i, cl, sp, rc');
+          }
+        } else if (fileName.endsWith('.csv')) {
+          const parsedData = parseCSVorTSV(fileContent);
+          importedData = mapImportedData(parsedData);
+          
+          if (!importedData || importedData.length === 0) {
+            throw new Error('CSV must contain columns: Date, Campaign, Creative Format, Region, Impressions, Clicks, Spends, Reach');
+          }
+        } else {
+          throw new Error('Please upload a .json or .csv file');
+        }
+        
+        // Update RAW_DATA
+        RAW_DATA = importedData;
+        window.RAW_DATA = importedData;
+        
+        // Update all filter options from imported data
+        ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+        ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+        const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+        const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
+        
+        window.ALL_REGIONS = ALL_REGIONS;
+        window.ALL_FORMATS = ALL_FORMATS;
+        
+        // Repopulate all filter selects with imported data values
+        ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
+        ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+        ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+        ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+        
+        // Update record count
+        const recordSpan = document.querySelector('.topbar-sub span');
+        if (recordSpan) {
+          recordSpan.textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
+        }
+        
+        // Refresh all pages
+        initOverviewPage();
+        if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
+        if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
+        if (document.getElementById('page-trends').classList.contains('active')) initTrendsPage();
+        
+        // Close modal and show success
+        document.getElementById('modal-import').classList.remove('open');
+        fileInput.value = '';
+        showToast(`✓ Imported ${importedData.length.toLocaleString()} records from ${fileName}`, 'success');
+      } catch (err) {
+        showToast('Error: ' + err.message, 'error');
+        console.error('Import error:', err);
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    // Handle Google Sheets paste/URL
+    const input = document.getElementById('gsheet-data').value.trim();
+    if (!input) {
+      showToast('Please paste CSV data or a Google Sheets URL', 'error');
+      return;
+    }
+
+    try {
+      let csvText;
+      
+      if (input.startsWith('http')) {
+        showToast('Fetching data from URL...', '');
+        
+        let fetchUrl = input;
+        if (input.includes('docs.google.com/spreadsheets')) {
+          const sheetIdMatch = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
+          const gidMatch = input.match(/gid=([0-9]+)/);
+          
+          if (sheetIdMatch) {
+            const sheetId = sheetIdMatch[1];
+            const gid = gidMatch ? gidMatch[1] : '0';
+            fetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+          }
+        }
+        
+        const corsProxies = [
+          'https://api.allorigins.win/raw?url=',
+          'https://corsproxy.io/?'
+        ];
+        
+        let fetchSuccess = false;
+        for (const proxy of corsProxies) {
+          try {
+            const response = await fetch(proxy + encodeURIComponent(fetchUrl));
+            if (response.ok) {
+              csvText = await response.text();
+              fetchSuccess = true;
+              break;
+            }
+          } catch (e) {
+            continue;
+          }
+        }
+        
+        if (!fetchSuccess) {
+          throw new Error('Could not fetch URL. Please copy the data directly from your spreadsheet and paste it here.');
+        }
+      } else {
+        csvText = input;
+      }
+      
+      const parsedData = parseCSVorTSV(csvText);
+      
+      if (parsedData.length === 0) {
+        throw new Error('No data found. Please check your input format.');
+      }
+      
+      console.log('Parsed data columns:', Object.keys(parsedData[0] || {}));
+      
+      const mappedData = mapImportedData(parsedData);
+      
+      if (!mappedData || mappedData.length === 0) {
+        const availableColumns = parsedData.length > 0 ? Object.keys(parsedData[0]).join(', ') : 'none';
+        throw new Error(`No valid data found. Required columns: Date, Campaign, Creative Format, Region, Impressions, Clicks, Spends, Reach. Found: ${availableColumns}`);
+      }
+      
+      RAW_DATA = mappedData;
+      window.RAW_DATA = mappedData;
+      
+      // Update all filter options from imported data
+      ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+      ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+      const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+      const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
+      
+      window.ALL_REGIONS = ALL_REGIONS;
+      window.ALL_FORMATS = ALL_FORMATS;
+      
+      // Repopulate all filter selects with imported data values
+      ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
+      ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+      ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+      ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+      
+      const recordSpan = document.querySelector('.topbar-sub span');
+      if (recordSpan) {
+        recordSpan.textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
+      }
+      
+      initOverviewPage();
+      if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
+      if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
+      if (document.getElementById('page-trends').classList.contains('active')) initTrendsPage();
+      
+      document.getElementById('modal-import').classList.remove('open');
+      document.getElementById('gsheet-data').value = '';
+      showToast(`✓ Imported ${mappedData.length.toLocaleString()} records successfully`, 'success');
+      
+    } catch (err) {
+      showToast('Error: ' + err.message, 'error');
+      console.error('Import error:', err);
+    }
+  }
+});
+
+function parseCSVorTSV(text) {
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return [];
+  
+  // Detect delimiter (tab or comma)
+  const firstLine = lines[0];
+  const delimiter = firstLine.includes('\t') ? '\t' : ',';
+  
+  const headers = parseLine(lines[0], delimiter);
+  const data = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseLine(lines[i], delimiter);
+    if (values.length >= headers.length - 1) { // Allow slight mismatch
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header.trim()] = values[index] ? values[index].trim() : '';
+      });
+      data.push(row);
+    }
+  }
+  
+  return data;
+}
+
+function parseLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === delimiter && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  result.push(current);
+  return result;
+}
+
+function mapImportedData(data) {
+  // Map various column name formats to our internal field names
+  // Based on user's columns: Date, Campaign, Campaign Type, Creative Format, Region, Country, Impressions, Clicks, CTR, Frequency, Reach, Spends, CPC, CPM, Views, Completion Rate, CPCV, CPS, Conversions, Revenue, ROAS, Viewability
+  const fieldMappings = {
+    'm': ['m', 'month', 'Month', 'MONTH', 'date', 'Date', 'DATE'],
+    'campaign': ['campaign', 'Campaign', 'CAMPAIGN', 'Campaign Name', 'campaign_name', 'CampaignName'],
+    'ct': ['ct', 'Campaign Type', 'campaign_type', 'CampaignType', 'type', 'Type'],
+    'f': ['f', 'format', 'Format', 'FORMAT', 'Creative Format', 'creative_format', 'CreativeFormat', 'ad_format', 'Ad Format'],
+    'reg': ['reg', 'region', 'Region', 'REGION', 'Country', 'country', 'COUNTRY', 'location', 'Location', 'geo', 'Geo'],
+    'i': ['i', 'impressions', 'Impressions', 'IMPRESSIONS', 'imps', 'Imps'],
+    'cl': ['cl', 'clicks', 'Clicks', 'CLICKS', 'click', 'Click'],
+    'sp': ['sp', 'spend', 'Spend', 'SPEND', 'Spends', 'spends', 'SPENDS', 'cost', 'Cost', 'COST'],
+    'rc': ['rc', 'reach', 'Reach', 'REACH', 'unique_reach', 'Unique Reach'],
+    'viewability': ['viewability', 'Viewability', 'VIEWABILITY', 'Viewability ', ' Viewability', 'viewability ']
+  };
+  
+  // Get the first row to detect column names
+  if (data.length === 0) return [];
+  
+  const sampleRow = data[0];
+  const columnMap = {};
+  
+  // Build column mapping - check exact match first, then partial match
+  const availableKeys = Object.keys(sampleRow);
+  console.log('Available columns in imported data:', availableKeys);
+  
+  for (const [targetField, possibleNames] of Object.entries(fieldMappings)) {
+    // First try exact match
+    for (const name of possibleNames) {
+      if (sampleRow.hasOwnProperty(name)) {
+        columnMap[targetField] = name;
+        break;
+      }
+    }
+    // If no exact match, try case-insensitive match with trimming
+    if (!columnMap[targetField]) {
+      for (const name of possibleNames) {
+        const found = availableKeys.find(k => k.toLowerCase().trim() === name.toLowerCase().trim());
+        if (found) {
+          columnMap[targetField] = found;
+          break;
+        }
+      }
+    }
+    // If still no match, try partial match (contains)
+    if (!columnMap[targetField]) {
+      for (const name of possibleNames) {
+        const found = availableKeys.find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()) || name.toLowerCase().trim().includes(k.toLowerCase().trim()));
+        if (found) {
+          columnMap[targetField] = found;
+          break;
+        }
+      }
+    }
+  }
+  
+  console.log('Column mapping result:', columnMap);
+  
+  // Check if we have all required fields (campaign is optional, ct can be derived from campaign if not present)
+  const requiredFields = ['m', 'f', 'reg', 'i', 'cl', 'sp', 'rc'];
+  const missingFields = requiredFields.filter(f => !columnMap[f]);
+  
+  // If ct is missing but campaign exists, use campaign for ct
+  if (!columnMap['ct'] && columnMap['campaign']) {
+    columnMap['ct'] = columnMap['campaign'];
+  }
+  
+  if (missingFields.length > 0 || !columnMap['ct']) {
+    console.error('Missing columns:', missingFields);
+    console.error('Column mapping:', columnMap);
+    console.error('Available columns:', Object.keys(sampleRow));
+    return [];
+  }
+  
+  console.log('Column mapping successful:', columnMap);
+  console.log('Viewability column mapped to:', columnMap['viewability']);
+  console.log('Campaign column mapped to:', columnMap['campaign']);
+  
+  // Map the data
+  const mappedData = data.map((row, idx) => {
+    const viewabilityRaw = columnMap['viewability'] ? row[columnMap['viewability']] : null;
+    const viewabilityVal = viewabilityRaw !== null && viewabilityRaw !== undefined && viewabilityRaw !== '' 
+      ? parseFloat(String(viewabilityRaw).replace(/[%,]/g, '')) 
+      : 0;
+    
+    if (idx < 3) {
+      console.log(`Row ${idx} viewability raw:`, viewabilityRaw, '-> parsed:', viewabilityVal);
+      console.log(`Row ${idx} campaign:`, columnMap['campaign'] ? row[columnMap['campaign']] : 'N/A');
+    }
+    
+    return {
+      m: String(row[columnMap['m']] || ''),
+      campaign: columnMap['campaign'] ? String(row[columnMap['campaign']] || '') : '',
+      ct: String(row[columnMap['ct']] || ''),
+      f: String(row[columnMap['f']] || ''),
+      reg: String(row[columnMap['reg']] || ''),
+      i: parseFloat(String(row[columnMap['i']] || '0').replace(/,/g, '')) || 0,
+      cl: parseFloat(String(row[columnMap['cl']] || '0').replace(/,/g, '')) || 0,
+      sp: parseFloat(String(row[columnMap['sp']] || '0').replace(/[$,]/g, '')) || 0,
+      rc: parseFloat(String(row[columnMap['rc']] || '0').replace(/,/g, '')) || 0,
+      viewability: viewabilityVal
+    };
+  }).filter(row => row.m && row.ct && row.f && row.reg);
+  
+  console.log('First mapped row:', mappedData[0]);
+  return mappedData;
+}
+
+function mapGoogleSheetsData(data, requiredFields) {
+  // Map column names to expected field names
+  const fieldMapping = {
+    'month': 'm',
+    'Month': 'm',
+    'campaign': 'ct',
+    'Campaign': 'ct',
+    'format': 'f',
+    'Format': 'f',
+    'region': 'reg',
+    'Region': 'reg',
+    'impressions': 'i',
+    'Impressions': 'i',
+    'clicks': 'cl',
+    'Clicks': 'cl',
+    'spend': 'sp',
+    'Spend': 'sp',
+    'reach': 'rc',
+    'Reach': 'rc'
+  };
+  
+  return data.map(row => {
+    const mapped = {};
+    
+    // Try to map each required field
+    for (const required of requiredFields) {
+      let value = row[required];
+      
+      // If not found directly, try mapped names
+      if (value === undefined) {
+        for (const [key, mappedField] of Object.entries(fieldMapping)) {
+          if (mappedField === required && row[key] !== undefined) {
+            value = row[key];
+            break;
+          }
+        }
+      }
+      
+      // Convert numeric fields
+      if (['i', 'cl', 'sp', 'rc'].includes(required)) {
+        mapped[required] = parseFloat(value) || 0;
+      } else {
+        mapped[required] = value || '';
+      }
+    }
+    
+    return mapped;
+  }).filter(row => {
+    // Filter out rows with missing required fields
+    return requiredFields.every(field => row[field] !== undefined && row[field] !== '');
+  });
+}
+
+document.getElementById('btn-export-csv').addEventListener('click', () => {
+  const data = filterData(getOvFilters());
+  downloadCSV(data.map(r => ({
+    Month: MONTH_LABELS[r.m] || r.m,
+    Campaign: r.ct, Format: r.f, Region: r.reg,
+    Impressions: r.i, Clicks: r.cl, CTR: (r.i>0? (r.cl/r.i*100).toFixed(2)+'%':'0%'),
+    Spend: r.sp.toFixed(2), Reach: r.rc
+  })), 'danube_export.csv');
+});
+document.getElementById('btn-generate-report').addEventListener('click', () => {
+  document.getElementById('modal-report').classList.add('open');
+});
+
+// MODAL
+document.getElementById('modal-close').addEventListener('click', () => document.getElementById('modal-report').classList.remove('open'));
+document.getElementById('modal-cancel').addEventListener('click', () => document.getElementById('modal-report').classList.remove('open'));
+document.getElementById('modal-overlay')?.addEventListener('click', e => { if(e.target.id === 'modal-report') document.getElementById('modal-report').classList.remove('open'); });
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  const ct = document.getElementById('modal-campaign').value;
+  const reg = document.getElementById('modal-region').value;
+  const m = document.getElementById('modal-month').value;
+  document.getElementById('modal-report').classList.remove('open');
+  // Apply to report builder
+  if (ct) document.getElementById('rb-campaign').value = ct;
+  if (reg) document.getElementById('rb-region').value = reg;
+  if (m) document.getElementById('rb-month').value = m;
+  switchPage('report-builder');
+  setTimeout(() => document.getElementById('rb-generate').click(), 100);
+});
+
+// ── OVERVIEW PAGE ──────────────────────────────────────────────────────
+let currentMetric = 'i';
+const metricLabels = {i:'Impressions', cl:'Clicks', sp:'Spend', ctr:'CTR'};
+let sortCol = 'i', sortDir = -1;
+let regPage = 1, regPerPage = 8;
+let ovData = RAW_DATA;
+
+function getOvFilters() {
+  return {
+    ct: document.getElementById('ov-campaign')?.value || '',
+    reg: document.getElementById('ov-region')?.value || '',
+    f: document.getElementById('ov-format')?.value || '',
+    m: document.getElementById('ov-month')?.value || ''
+  };
+}
+
+function renderOverview() {
+  ovData = filterData(getOvFilters());
+  renderKPIs(ovData);
+  renderTrendChart(ovData);
+  renderDonutChart(ovData);
+  renderFormatChart(ovData);
+  renderCtrChart(ovData);
+  renderClicksChart(ovData);
+  renderRegionTable(ovData);
+}
+
+function renderKPIs(data) {
+  const totI  = data.reduce((s,r) => s+r.i, 0);
+  const totCl = data.reduce((s,r) => s+r.cl, 0);
+  const totSp = data.reduce((s,r) => s+r.sp, 0);
+  const totRc = data.reduce((s,r) => s+r.rc, 0);
+  const ctr   = totI > 0 ? totCl/totI*100 : 0;
+  const cpm   = totI > 0 ? totSp/totI*1000 : 0;
+  const cpc   = totCl > 0 ? totSp/totCl : 0;
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = `
+    <div class="kpi-card feat"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="9" ry="6" stroke="#E6586C" stroke-width="1.8"/><circle cx="10" cy="10" r="3" fill="#E6586C"/><circle cx="10" cy="10" r="1.5" fill="white"/></svg></div><div class="kpi-lbl">Total Impressions</div><div class="kpi-val">${fmt(totI,'imp')}</div><div class="kpi-trend trend-n">${data.length} records</div></div>
+    <div class="kpi-card"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="5" y="2" width="10" height="16" rx="5" stroke="#9D5A8B" stroke-width="1.8"/><line x1="10" y1="2" x2="10" y2="9" stroke="#9D5A8B" stroke-width="1.5"/><line x1="5" y1="9" x2="15" y2="9" stroke="#9D5A8B" stroke-width="1.3"/></svg></div><div class="kpi-lbl">Total Clicks</div><div class="kpi-val">${fmt(totCl,'imp')}</div><div class="kpi-trend trend-n">${data.length} records</div></div>
+    <div class="kpi-card"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><polyline points="2,16 7,10 11,13 17,5" stroke="#E8834E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><polyline points="2,16 7,10 11,13 17,5 17,16 2,16" stroke="none" fill="#E8834E" opacity="0.12"/><path d="M2 16 L7 10 L11 13 L17 5 L17 16 Z" fill="#E8834E" opacity="0.1"/></svg></div><div class="kpi-lbl">Avg CTR</div><div class="kpi-val">${ctr.toFixed(2)}%</div><div class="kpi-trend trend-n">Industry avg 0.50%</div></div>
+    <div class="kpi-card"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#2CA8A8" stroke-width="1.8"/><text x="10" y="14" text-anchor="middle" font-family="Arial" font-size="9" font-weight="800" fill="#2CA8A8">$</text></svg></div><div class="kpi-lbl">Total Spend</div><div class="kpi-val">${fmt(totSp,'usd')}</div><div class="kpi-trend trend-n">USD</div></div>
+    <div class="kpi-card"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#6C8EE6" stroke-width="1.8"/><circle cx="10" cy="10" r="5" stroke="#6C8EE6" stroke-width="1.3"/><circle cx="10" cy="10" r="2.5" fill="#6C8EE6"/></svg></div><div class="kpi-lbl">Avg CPM</div><div class="kpi-val">$${cpm.toFixed(2)}</div><div class="kpi-trend trend-n">Per 1K impressions</div></div>
+    <div class="kpi-card"><div class="kpi-ico"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M12 2L5 11H10L8 18L15 9H10L12 2Z" fill="#E6586C"/></svg></div><div class="kpi-lbl">Avg CPC</div><div class="kpi-val">$${cpc.toFixed(2)}</div><div class="kpi-trend trend-n">Per click</div></div>
+  `;
+}
+
+function renderTrendChart(data) {
+  const months = [...new Set(data.map(r => r.m))].filter(Boolean).sort();
+  const byMonth = months.map(m => {
+    const rows = data.filter(r => r.m === m);
+    return { m, i: rows.reduce((s,r)=>s+r.i,0), sp: rows.reduce((s,r)=>s+r.sp,0), cl: rows.reduce((s,r)=>s+r.cl,0) };
+  });
+  makeChart('ch-trend', {
+    type: 'bar',
+    data: {
+      labels: byMonth.map(d => MONTH_LABELS[d.m] || d.m),
+      datasets: [
+        { label:'Impressions', data: byMonth.map(d=>d.i), backgroundColor:'rgba(230,88,108,0.2)', borderColor:PINK, borderWidth:2, borderRadius:4, yAxisID:'y' },
+        { label:'Spend ($)', data: byMonth.map(d=>d.sp), type:'line', borderColor:PURPLE, backgroundColor:'transparent', borderWidth:2.5, pointRadius:4, pointBackgroundColor:PURPLE, tension:.4, yAxisID:'y2' }
+      ]
+    },
+    options: {
+      responsive:true, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{position:'top',labels:{boxWidth:12,padding:14,font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.datasetIndex===0?` Impr: ${fmt(ctx.raw,'imp')}`:`Spend: $${(ctx.raw/1000).toFixed(1)}K`}} },
+      scales:{
+        y:{position:'left',grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>fmt(v,'imp'),font:{size:10}}},
+        y2:{position:'right',grid:{display:false},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',font:{size:10}}},
+        x:{grid:{display:false},ticks:{font:{size:11}}}
+      }
+    }
+  });
+}
+
+function renderDonutChart(data) {
+  const byReg = aggBy(data, 'reg').sort((a,b)=>b.sp-a.sp).slice(0,8);
+  makeChart('ch-donut', {
+    type:'doughnut',
+    data:{ labels: byReg.map(r=>r.key), datasets:[{ data: byReg.map(r=>r.sp), backgroundColor:PALETTE, borderWidth:2, borderColor:'#fff', hoverOffset:6 }] },
+    options:{ responsive:false, cutout:'66%',
+      plugins:{ legend:{position:'bottom',labels:{boxWidth:10,padding:8,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>`$${(ctx.raw/1000).toFixed(1)}K (${(ctx.raw/data.reduce((s,r)=>s+r.sp,0)*100).toFixed(1)}%)`}} }
+    }
+  });
+}
+
+function renderFormatChart(data) {
+  const metricKey = currentMetric === 'ctr' ? 'ctr' : currentMetric;
+  const byFmt = aggBy(data, 'f').sort((a,b)=>b[metricKey]-a[metricKey]).slice(0,8);
+  document.getElementById('fmt-metric-label').textContent = metricLabels[currentMetric]?.toLowerCase() || 'impressions';
+  makeChart('ch-format', {
+    type:'bar', data:{ labels: byFmt.map(r=>r.key.length>18?r.key.slice(0,18)+'…':r.key),
+      datasets:[{ label: metricLabels[currentMetric], data:byFmt.map(r=>r[metricKey]), backgroundColor:byFmt.map((_,i)=>i===0?PINK:i===1?PURPLE:'rgba(230,88,108,0.3)'), borderRadius:4 }] },
+    options:{indexAxis:'y', responsive:true, plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toLocaleString('en',{maximumFractionDigits:2})}`}}},
+      scales:{ x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:10}}} }}
+  });
+}
+
+function renderCtrChart(data) {
+  const byReg = aggBy(data, 'reg').sort((a,b)=>b.ctr-a.ctr).slice(0,10);
+  makeChart('ch-ctr', {
+    type:'bar', data:{ labels:byReg.map(r=>r.key.length>12?r.key.slice(0,12)+'…':r.key),
+      datasets:[{ label:'CTR %', data:byReg.map(r=>r.ctr), backgroundColor:byReg.map(r=>r.ctr>=0.65?PINK:r.ctr>=0.62?PURPLE:'rgba(230,88,108,0.3)'), borderRadius:4 }] },
+    options:{ responsive:true, plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` CTR: ${ctx.raw.toFixed(2)}%`}}},
+      scales:{ y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>v.toFixed(2)+'%',font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+}
+
+function renderClicksChart(data) {
+  const months = [...new Set(data.map(r=>r.m))].filter(Boolean).sort();
+  const byMonth = months.map(m => ({ m, cl: data.filter(r=>r.m===m).reduce((s,r)=>s+r.cl,0) }));
+  makeChart('ch-clicks', {
+    type:'line', data:{ labels:byMonth.map(d=>MONTH_LABELS[d.m]||d.m),
+      datasets:[{ label:'Clicks', data:byMonth.map(d=>d.cl), borderColor:PINK, backgroundColor:'rgba(230,88,108,0.1)', borderWidth:2.5, fill:true, tension:.4, pointRadius:4, pointBackgroundColor:PINK }] },
+    options:{ responsive:true, plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toLocaleString()} clicks`}}},
+      scales:{ y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>(v/1000).toFixed(0)+'K',font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+}
+
+// Region table with sort & pagination
+function renderRegionTable(data) {
+  const byReg = aggBy(data, 'reg');
+  const maxI = Math.max(...byReg.map(r=>r.i), 1);
+  const totalI = byReg.reduce((s,r)=>s+r.i,0) || 1;
+
+  // Sort
+  byReg.sort((a,b) => {
+    const va = a[sortCol] ?? (typeof a.key==='string'? a.key : 0);
+    const vb = b[sortCol] ?? (typeof b.key==='string'? b.key : 0);
+    if (typeof va === 'string') return sortDir * va.localeCompare(vb);
+    return sortDir * (va - vb);
+  });
+
+  // Update sort headers
+  document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    th.className = th.dataset.sort === sortCol ? (sortDir === 1 ? 'sort-asc' : 'sort-desc') : '';
+  });
+
+  // Pagination
+  const total = byReg.length;
+  const pages = Math.ceil(total / regPerPage);
+  regPage = Math.min(regPage, pages);
+  const slice = byReg.slice((regPage-1)*regPerPage, regPage*regPerPage);
+
+  document.getElementById('tbl-sub-text').textContent =
+    `${total} regions · ${data.length} records · page ${regPage}/${pages}`;
+
+  const tbody = document.getElementById('region-tbody');
+  tbody.innerHTML = slice.map((r, i) => {
+    const pct = (r.i/totalI*100).toFixed(1);
+    const barW = (r.i/maxI*100).toFixed(0);
+    const ctrClass = r.ctr>=0.65?'ctr-hi':r.ctr>=0.62?'ctr-md':'ctr-lo';
+    const color = PALETTE[(i + (regPage-1)*regPerPage) % PALETTE.length];
+    return `<tr>
+      <td><span style="display:inline-flex;align-items:center"><span class="r-dot" style="background:${color}"></span>${r.key}</span></td>
+      <td><strong>${fmt(r.i,'imp')}</strong></td>
+      <td style="min-width:120px"><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${barW}%"></div></div><span style="font-size:11px;min-width:32px">${pct}%</span></div></td>
+      <td>${fmt(r.cl,'clk')}</td>
+      <td><span class="ctr-badge ${ctrClass}">${r.ctr.toFixed(2)}%</span></td>
+      <td><strong>$${(r.sp/1000).toFixed(1)}K</strong></td>
+      <td>$${r.cpm.toFixed(2)}</td>
+      <td>$${r.cpc.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination buttons
+  const pg = document.getElementById('reg-pagination');
+  pg.innerHTML = `<span class="page-info">Showing ${(regPage-1)*regPerPage+1}–${Math.min(regPage*regPerPage,total)} of ${total}</span>`;
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'page-btn'; prevBtn.textContent = '‹ Prev';
+  prevBtn.disabled = regPage === 1;
+  prevBtn.addEventListener('click', () => { regPage--; renderRegionTable(ovData); });
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'page-btn'; nextBtn.textContent = 'Next ›';
+  nextBtn.disabled = regPage >= pages;
+  nextBtn.addEventListener('click', () => { regPage++; renderRegionTable(ovData); });
+  for (let p = 1; p <= Math.min(pages,5); p++) {
+    const pb = document.createElement('button');
+    pb.className = 'page-btn' + (p===regPage?' active':'');
+    pb.textContent = p;
+    pb.addEventListener('click', () => { regPage = p; renderRegionTable(ovData); });
+    pg.appendChild(pb);
+  }
+  pg.appendChild(prevBtn); pg.appendChild(nextBtn);
+}
+
+// Table sort
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = -1; }
+    regPage = 1;
+    renderRegionTable(ovData);
+  });
+});
+
+// Filters
+['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
+});
+
+// Metric toggles
+document.querySelectorAll('.m-toggle[data-metric]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.m-toggle[data-metric]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentMetric = btn.dataset.metric;
+    renderFormatChart(ovData);
+  });
+});
+
+// Clear filters
+document.getElementById('btn-clear-filters').addEventListener('click', () => {
+  ['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  regPage = 1;
+  renderOverview();
+  showToast('✓ Filters cleared');
+});
+
+// Table CSV
+document.getElementById('btn-tbl-csv').addEventListener('click', () => {
+  const rows = aggBy(ovData,'reg').map(r => ({
+    Region:r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2), CPM:'$'+r.cpm.toFixed(2), CPC:'$'+r.cpc.toFixed(2)
+  }));
+  downloadCSV(rows, 'danube_regions.csv');
+});
+
+// ── OVERVIEW PAGE ────────────────────────────────────────────────────────
+let ovInited = false;
+function initOverviewPage() {
+  if (ovInited) {
+    renderOverview();
+    return;
+  }
+  ['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
+  });
+  renderOverview();
+  ovInited = true;
+}
+
+// ── GEO PAGE ───────────────────────────────────────────────────────────
+let geoInited = false;
+function initGeoPage() {
+  ['geo-campaign','geo-month'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderGeoPage);
+  });
+  renderGeoPage();
+  geoInited = true;
+}
+
+function getGeoFilters() {
+  return { ct: document.getElementById('geo-campaign')?.value||'', m: document.getElementById('geo-month')?.value||'' };
+}
+
+function renderGeoPage() {
+  const data = filterData(getGeoFilters());
+  const byReg = aggBy(data,'reg').sort((a,b)=>b.i-a.i).slice(0,12);
+
+  makeChart('ch-geo-imp', { type:'bar', data:{ labels:byReg.map(r=>r.key),
+    datasets:[{ label:'Impressions', data:byReg.map(r=>r.i), backgroundColor:PALETTE, borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw,'imp')}`}}},
+      scales:{ x:{ticks:{callback:v=>fmt(v,'imp'),font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+
+  makeChart('ch-geo-spend', { type:'bar', data:{ labels:byReg.map(r=>r.key),
+    datasets:[{ label:'Spend', data:byReg.map(r=>r.sp), backgroundColor:byReg.map((_,i)=>PALETTE[i%PALETTE.length]), borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>`$${(ctx.raw/1000).toFixed(1)}K`}}},
+      scales:{ x:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+
+  const tbody = document.getElementById('geo-tbody');
+  tbody.innerHTML = byReg.map((r,i) => `<tr>
+    <td><span style="display:inline-flex;align-items:center"><span class="r-dot" style="background:${PALETTE[i%PALETTE.length]}"></span>${r.key}</span></td>
+    <td>${fmt(r.i,'imp')}</td><td>${fmt(r.cl,'clk')}</td>
+    <td><span class="ctr-badge ${r.ctr>=0.65?'ctr-hi':r.ctr>=0.62?'ctr-md':'ctr-lo'}">${r.ctr.toFixed(2)}%</span></td>
+    <td>${fmt(r.rc,'imp')}</td><td>$${(r.sp/1000).toFixed(1)}K</td>
+    <td>$${r.cpm.toFixed(2)}</td><td>$${r.cpc.toFixed(2)}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('btn-geo-csv').addEventListener('click', () => {
+  const data = filterData(getGeoFilters());
+  downloadCSV(aggBy(data,'reg').sort((a,b)=>b.i-a.i).map(r=>({
+    Region:r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Reach:r.rc, Spend:'$'+r.sp.toFixed(2), CPM:'$'+r.cpm.toFixed(2), CPC:'$'+r.cpc.toFixed(2)
+  })), 'danube_geo.csv');
+});
+
+// ── FORMATS PAGE ───────────────────────────────────────────────────────
+let fmtInited = false;
+function initFormatsPage() {
+  ['fmt-campaign','fmt-region'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderFormatsPage);
+  });
+  // populate region select
+  populateSelect('fmt-region', ALL_REGIONS);
+  renderFormatsPage();
+  fmtInited = true;
+}
+
+function getFmtFilters() {
+  return { ct: document.getElementById('fmt-campaign')?.value||'', reg: document.getElementById('fmt-region')?.value||'' };
+}
+
+function renderFormatsPage() {
+  const data = filterData(getFmtFilters());
+  const byFmt = aggBy(data,'f').sort((a,b)=>b.i-a.i).slice(0,10);
+
+  makeChart('ch-fmt-imp', { type:'bar', data:{ labels:byFmt.map(r=>r.key.length>20?r.key.slice(0,20)+'…':r.key),
+    datasets:[{ label:'Impressions', data:byFmt.map(r=>r.i), backgroundColor:PALETTE, borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw,'imp')}`}}},
+      scales:{ x:{ticks:{callback:v=>fmt(v,'imp'),font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+
+  makeChart('ch-fmt-ctr', { type:'bar', data:{ labels:byFmt.map(r=>r.key.length>20?r.key.slice(0,20)+'…':r.key),
+    datasets:[{ label:'CTR %', data:byFmt.map(r=>r.ctr), backgroundColor:byFmt.map(r=>r.ctr>=0.65?PINK:r.ctr>=0.62?PURPLE:'rgba(230,88,108,0.3)'), borderRadius:4 }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(2)}%`}}},
+      scales:{ x:{ticks:{callback:v=>v.toFixed(2)+'%',font:{size:10}}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+
+  const tbody = document.getElementById('fmt-tbody');
+  tbody.innerHTML = byFmt.map((r,i) => `<tr>
+    <td><span class="r-dot" style="background:${PALETTE[i%PALETTE.length]}"></span>${r.key}</td>
+    <td>${fmt(r.i,'imp')}</td><td>${fmt(r.cl,'clk')}</td>
+    <td><span class="ctr-badge ${r.ctr>=0.65?'ctr-hi':r.ctr>=0.62?'ctr-md':'ctr-lo'}">${r.ctr.toFixed(2)}%</span></td>
+    <td>$${(r.sp/1000).toFixed(1)}K</td><td>$${r.cpm.toFixed(2)}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('btn-fmt-csv').addEventListener('click', () => {
+  downloadCSV(aggBy(filterData(getFmtFilters()),'f').sort((a,b)=>b.i-a.i).map(r=>({
+    Format:r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2), CPM:'$'+r.cpm.toFixed(2)
+  })), 'danube_formats.csv');
+});
+
+// ── TRENDS PAGE ────────────────────────────────────────────────────────
+let trMetric = 'i';
+const trMetricLabels = {i:'Impressions', cl:'Clicks', sp:'Spend ($)'};
+let trInited = false;
+
+function initTrendsPage() {
+  ['tr-region','tr-format'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderTrendsPage);
+  });
+  document.querySelectorAll('.m-toggle[data-tr-metric]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.m-toggle[data-tr-metric]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      trMetric = btn.dataset.trMetric;
+      document.getElementById('tr-chart-title').textContent = `Monthly ${trMetricLabels[trMetric]} Trend`;
+      renderTrendsPage();
+    });
+  });
+  populateSelect('tr-region', ALL_REGIONS);
+  populateSelect('tr-format', ALL_FORMATS);
+  renderTrendsPage();
+  trInited = true;
+}
+
+function getTrFilters() {
+  return { reg: document.getElementById('tr-region')?.value||'', f: document.getElementById('tr-format')?.value||'' };
+}
+
+function renderTrendsPage() {
+  const data = filterData(getTrFilters());
+  const months = [...new Set(RAW_DATA.map(r=>r.m))].filter(Boolean).sort();
+  const byMonth = months.map(m => {
+    const rows = data.filter(r=>r.m===m);
+    return { m, i:rows.reduce((s,r)=>s+r.i,0), cl:rows.reduce((s,r)=>s+r.cl,0), sp:rows.reduce((s,r)=>s+r.sp,0) };
+  });
+
+  makeChart('ch-trend-main', { type:'line',
+    data:{ labels:byMonth.map(d=>MONTH_LABELS[d.m]||d.m),
+      datasets:[{ label:trMetricLabels[trMetric], data:byMonth.map(d=>d[trMetric]), borderColor:PINK, backgroundColor:'rgba(230,88,108,0.08)', fill:true, borderWidth:2.5, tension:.4, pointRadius:5, pointBackgroundColor:PINK }] },
+    options:{ responsive:true, plugins:{legend:{display:false}},
+      scales:{ y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10},callback:v=>trMetric==='sp'?'$'+(v/1000).toFixed(0)+'K':fmt(v,'imp')}}, x:{grid:{display:false},ticks:{font:{size:11}}} } }
+  });
+
+  // Campaign distribution
+  const byCamp = aggBy(data,'ct').sort((a,b)=>b.i-a.i);
+  makeChart('ch-camp-dist', { type:'doughnut',
+    data:{ labels:byCamp.map(r=>r.key), datasets:[{ data:byCamp.map(r=>r.i), backgroundColor:PALETTE, borderWidth:2, borderColor:'#fff' }] },
+    options:{ responsive:true, plugins:{ legend:{position:'bottom',labels:{boxWidth:10,padding:8,font:{size:10}}},
+      tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw,'imp')}`}} } }
+  });
+
+  // CPM & CPC trends
+  const cpmData = byMonth.map(d => d.i>0 ? d.sp/d.i*1000 : 0);
+  const cpcData = byMonth.map(d => d.cl>0 ? d.sp/d.cl : 0);
+  makeChart('ch-cpm-trend', { type:'line',
+    data:{ labels:byMonth.map(d=>MONTH_LABELS[d.m]||d.m), datasets:[{ label:'CPM', data:cpmData, borderColor:PURPLE, backgroundColor:'rgba(157,90,139,0.1)', fill:true, borderWidth:2, tension:.4, pointRadius:4 }] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>'$'+v.toFixed(2),font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+  makeChart('ch-cpc-trend', { type:'line',
+    data:{ labels:byMonth.map(d=>MONTH_LABELS[d.m]||d.m), datasets:[{ label:'CPC', data:cpcData, borderColor:'#E8834E', backgroundColor:'rgba(232,131,78,0.1)', fill:true, borderWidth:2, tension:.4, pointRadius:4 }] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{callback:v=>'$'+v.toFixed(2),font:{size:10}}}, x:{grid:{display:false},ticks:{font:{size:10}}} } }
+  });
+}
+
+// ── REPORT BUILDER ─────────────────────────────────────────────────────
+let rbData = [], rbPage = 1, rbPerPage = 15;
+
+// populate rb region select
+populateSelect('rb-region', ALL_REGIONS);
+
+document.getElementById('rb-generate').addEventListener('click', () => {
+  const ct = document.getElementById('rb-campaign').value;
+  const reg = document.getElementById('rb-region').value;
+  const m = document.getElementById('rb-month').value;
+
+  rbData = filterData({ ct, reg, m });
+
+  // Get selected columns to display
+  const dims = [...document.querySelectorAll('#rb-group-by input:checked')].map(i => i.value);
+  const metrics = [...document.querySelectorAll('#rb-metrics input:checked')].map(i => i.value);
+
+  console.log('Selected dimensions:', dims);
+  console.log('Selected metrics:', metrics);
+  console.log('Total records:', rbData.length);
+  console.log('Sample row:', rbData[0]);
+  console.log('Sample row campaign:', rbData[0]?.campaign);
+  console.log('Sample row viewability:', rbData[0]?.viewability);
+
+  if (!dims.length && !metrics.length) { 
+    showToast('Select at least one column to display', 'error'); 
+    return; 
+  }
+
+  // Use raw data directly - no aggregation
+  // Calculate CTR, CPM, CPC for each row if needed
+  const rows = rbData.map(r => {
+    const ctr = r.i > 0 ? (r.cl / r.i * 100) : 0;
+    const cpm = r.i > 0 ? (r.sp / r.i * 1000) : 0;
+    const cpc = r.cl > 0 ? (r.sp / r.cl) : 0;
+    return { ...r, ctr, cpm, cpc };
+  });
+  
+  console.log('First processed row:', rows[0]);
+
+  // Column labels
+  const colLabels = {
+    reg: 'Region', 
+    campaign: 'Campaign Name', 
+    ct: 'Campaign Type', 
+    f: 'Creative Format', 
+    m: 'Date',
+    i: 'Impressions', 
+    cl: 'Clicks', 
+    ctr: 'CTR', 
+    sp: 'Spend', 
+    cpm: 'CPM', 
+    cpc: 'CPC', 
+    rc: 'Reach', 
+    viewability: 'Viewability'
+  };
+  
+  const allCols = [...dims, ...metrics];
+
+  document.getElementById('rb-thead').innerHTML = '<tr>' + allCols.map(c =>
+    `<th>${colLabels[c] || c}</th>`).join('') + '</tr>';
+
+  // Paginate
+  rbPage = 1;
+  const renderRBTable = () => {
+    const total = rows.length;
+    const pages = Math.ceil(total/rbPerPage);
+    const slice = rows.slice((rbPage-1)*rbPerPage, rbPage*rbPerPage);
+
+    document.getElementById('rb-sub').textContent = `Showing ${total.toLocaleString()} records from imported data`;
+    document.getElementById('rb-tbody').innerHTML = slice.map(r => '<tr>' + allCols.map(c => {
+      if (c === 'i') return `<td><strong>${r.i.toLocaleString()}</strong></td>`;
+      if (c === 'cl') return `<td>${r.cl.toLocaleString()}</td>`;
+      if (c === 'ctr') return `<td>${r.ctr.toFixed(2)}%</td>`;
+      if (c === 'sp') return `<td>$${r.sp.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>`;
+      if (c === 'cpm') return `<td>$${r.cpm.toFixed(2)}</td>`;
+      if (c === 'cpc') return `<td>$${r.cpc.toFixed(2)}</td>`;
+      if (c === 'rc') return `<td>${r.rc.toLocaleString()}</td>`;
+      if (c === 'viewability') return `<td>${typeof r.viewability === 'number' ? r.viewability.toFixed(2) + '%' : '-'}</td>`;
+      if (c === 'm') return `<td>${r.m || ''}</td>`;
+      if (c === 'campaign') return `<td>${r.campaign || ''}</td>`;
+      if (c === 'ct') return `<td>${r.ct || ''}</td>`;
+      if (c === 'f') return `<td>${r.f || ''}</td>`;
+      if (c === 'reg') return `<td>${r.reg || ''}</td>`;
+      return `<td>${r[c] !== undefined && r[c] !== null ? r[c] : ''}</td>`;
+    }).join('') + '</tr>').join('');
+
+    const pg = document.getElementById('rb-pagination');
+    pg.innerHTML = `<span class="page-info">Showing ${(rbPage-1)*rbPerPage+1}–${Math.min(rbPage*rbPerPage,total)} of ${total}</span>`;
+    const prev = document.createElement('button'); prev.className='page-btn'; prev.textContent='‹'; prev.disabled=rbPage===1;
+    prev.addEventListener('click',()=>{rbPage--;renderRBTable();});
+    const next = document.createElement('button'); next.className='page-btn'; next.textContent='›'; next.disabled=rbPage>=pages;
+    next.addEventListener('click',()=>{rbPage++;renderRBTable();});
+    for(let p=1;p<=Math.min(pages,5);p++){const b=document.createElement('button');b.className='page-btn'+(p===rbPage?' active':'');b.textContent=p;b.addEventListener('click',()=>{rbPage=p;renderRBTable();});pg.appendChild(b);}
+    pg.appendChild(prev);pg.appendChild(next);
+  };
+  renderRBTable();
+  showToast(`✓ Report generated: ${rows.length} groups`, 'success');
+
+  // Store rows for CSV export
+  window._rbRows = rows.map(r => {
+    const out = {};
+    allCols.forEach(c => {
+      const lbl = dimLabels[c]||metricLabelsRB[c]||c;
+      if (c==='ctr') out[lbl] = r.ctr.toFixed(2)+'%';
+      else if (c==='sp') out[lbl] = '$'+r.sp.toFixed(2);
+      else if (c==='cpm') out[lbl] = '$'+r.cpm.toFixed(2);
+      else if (c==='cpc') out[lbl] = '$'+r.cpc.toFixed(2);
+      else if (c==='m') out[lbl] = MONTH_LABELS[r.m]||r.m;
+      else out[lbl] = r[c] ?? '';
+    });
+    return out;
+  });
+});
+
+document.getElementById('rb-clear').addEventListener('click', () => {
+  ['rb-campaign','rb-region','rb-month'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.querySelectorAll('#rb-group-by input').forEach((cb,i) => cb.checked = i<2);
+  document.querySelectorAll('#rb-metrics input').forEach((cb,i) => cb.checked = i<4);
+  document.getElementById('rb-sub').textContent = 'Configure filters above and click Generate Report';
+  document.getElementById('rb-thead').innerHTML = '';
+  document.getElementById('rb-tbody').innerHTML = '';
+  document.getElementById('rb-pagination').innerHTML = '';
+  showToast('Report builder cleared');
+});
+
+document.getElementById('rb-export').addEventListener('click', () => {
+  if (window._rbRows?.length) downloadCSV(window._rbRows, 'danube_report.csv');
+  else showToast('Generate a report first', 'error');
+});
+
+// ── EXPORT PAGE ────────────────────────────────────────────────────────
+document.querySelectorAll('[data-export]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.export;
+    let rows, filename;
+    if (type === 'all') {
+      rows = RAW_DATA.map(r=>({ Month:MONTH_LABELS[r.m]||r.m, Campaign:r.ct, Format:r.f, Region:r.reg, Impressions:r.i, Clicks:r.cl, CTR:(r.i>0?(r.cl/r.i*100).toFixed(2)+'%':'0%'), Spend:'$'+r.sp.toFixed(2), Reach:r.rc }));
+      filename = 'danube_full_dataset.csv';
+    } else if (type === 'regions') {
+      rows = aggBy(RAW_DATA,'reg').sort((a,b)=>b.i-a.i).map(r=>({ Region:r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2), CPM:'$'+r.cpm.toFixed(2), CPC:'$'+r.cpc.toFixed(2) }));
+      filename = 'danube_regions.csv';
+    } else if (type === 'formats') {
+      rows = aggBy(RAW_DATA,'f').sort((a,b)=>b.i-a.i).map(r=>({ Format:r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2), CPM:'$'+r.cpm.toFixed(2) }));
+      filename = 'danube_formats.csv';
+    } else if (type === 'monthly') {
+      rows = aggBy(RAW_DATA,'m').sort((a,b)=>a.key.localeCompare(b.key)).map(r=>({ Month:MONTH_LABELS[r.key]||r.key, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2) }));
+      filename = 'danube_monthly.csv';
+    } else if (type === 'top') {
+      rows = RAW_DATA.map(r=>({...r, ctr:r.i>0?r.cl/r.i*100:0})).sort((a,b)=>b.ctr-a.ctr).slice(0,50).map(r=>({ Region:r.reg, Format:r.f, Campaign:r.ct, Month:MONTH_LABELS[r.m]||r.m, Impressions:r.i, Clicks:r.cl, CTR:r.ctr.toFixed(2)+'%', Spend:'$'+r.sp.toFixed(2) }));
+      filename = 'danube_top50.csv';
+    }
+    downloadCSV(rows, filename);
+  });
+});
+
+// ── INIT ───────────────────────────────────────────────────────────────
+renderOverview();
+</script>
+</body>
+</html>

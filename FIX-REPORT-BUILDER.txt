@@ -1,0 +1,51 @@
+URGENT FIX: Report Builder Dropdowns Not Populating from CSV
+================================================================
+
+PROBLEM:
+The Report Builder dropdowns for Campaign, Region, and Month are not being populated 
+dynamically from your CSV data. They're either hardcoded or using wrong variables.
+
+SOLUTION:
+Open dashboard.html and make these 2 changes:
+
+CHANGE 1 - Fix main initialization (around lines 752-755):
+FIND THIS CODE:
+  // Repopulate ALL filter selects with data values
+  ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
+  ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+  ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+
+REPLACE WITH THIS:
+  // Repopulate ALL filter selects with data values
+  ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, window.ALL_REGIONS));
+  ['ov-format','tr-format'].forEach(id => populateSelect(id, window.ALL_FORMATS));
+  ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, window.ALL_CAMPAIGNS));
+  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, window.ALL_MONTHS));
+
+CHANGE 2 - Remove duplicate code (around lines 1763-1766):
+FIND THIS CODE:
+  // populate rb region select
+  populateSelect('rb-region', window.ALL_REGIONS);
+  populateSelect('rb-campaign', window.ALL_CAMPAIGNS);
+  populateSelect('rb-month', window.ALL_MONTHS);
+
+REPLACE WITH THIS:
+  (Remove all 3 lines - this code is redundant)
+
+WHAT THIS FIXES:
+- Adds "window." before ALL_REGIONS, ALL_FORMATS, ALL_CAMPAIGNS, ALL_MONTHS
+- This makes the code use the correct variables that contain your CSV data
+- Report Builder dropdowns will now populate with:
+  - Campaign Types: Awareness, Eid Sale, Other, Pay Week, etc.
+  - Regions: Abu Dhabi, Ras Al Khaimah, Fujairah, etc.  
+  - Months: Oct 25, Nov 25, Dec 25, etc.
+
+AFTER FIXING:
+1. Save the file
+2. Refresh browser (Ctrl+F5)
+3. Click "Import Data" and upload your CSV
+4. Go to Report Builder page
+5. All dropdowns should show your CSV data dynamically!
+
+The hardcoded "Awareness" option you saw will be replaced with all campaign types from your CSV.
