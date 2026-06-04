@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Login — PERFORMENA</title>
+<style>
+:root{
+  --pink:#E6586C;
+  --pink-dark:#cc4a5e;
+  --pink-light:#fde8eb;
+  --purple:#9D5A8B;
+  --dark:#2C2C2C;
+  --white:#FFFFFF;
+  --g100:#F8F8F8;
+  --g200:#F0F0F0;
+  --g300:#E0E0E0;
+  --g400:#AAAAAA;
+  --g600:#666666;
+  --font:Arial,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+html,body{
+  height:100%;
+  font-family:var(--font);
+  background:var(--g100);
+  color:var(--dark);
+  font-size:13px;
+}
+
+.login-container{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(135deg,var(--g100) 0%,var(--white) 100%);
+}
+
+/* Light theme background glows */
+.login-container::before{
+  content:'';
+  position:absolute;
+  top:-100px;
+  right:-100px;
+  width:400px;
+  height:400px;
+  background:radial-gradient(circle,rgba(230,88,108,0.08) 0%,transparent 70%);
+  border-radius:50%;
+  pointer-events:none;
+  animation:float 8s ease-in-out infinite;
+}
+
+.login-container::after{
+  content:'';
+  position:absolute;
+  bottom:-80px;
+  left:-80px;
+  width:350px;
+  height:350px;
+  background:radial-gradient(circle,rgba(157,90,139,0.06) 0%,transparent 70%);
+  border-radius:50%;
+  pointer-events:none;
+  animation:float 10s ease-in-out infinite reverse;
+}
+
+@keyframes float{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(30px,-30px) scale(1.1)}
+}
+
+.login-box{
+  background:var(--white);
+  border:1px solid var(--g300);
+  border-radius:16px;
+  padding:48px 40px;
+  width:100%;
+  max-width:420px;
+  position:relative;
+  z-index:1;
+  box-shadow:0 8px 32px rgba(0,0,0,0.1);
+}
+
+.logo-section{
+  text-align:center;
+  margin-bottom:24px;
+}
+
+.logo-svg{
+  width:48px;
+  height:48px;
+  margin:0 auto 16px;
+}
+
+.logo-name{
+  font-size:28px;
+  font-weight:800;
+  letter-spacing:3px;
+  color:var(--dark);
+  margin-bottom:6px;
+  background:linear-gradient(135deg,var(--dark) 0%, #e6586c 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.logo-sub{
+  font-size:10px;
+  letter-spacing:2px;
+  color:var(--g600);
+  text-transform:uppercase;
+  font-weight:600;
+}
+
+.welcome-text{
+  text-align:center;
+  margin-bottom:26px;
+}
+
+.welcome-text h2{
+  font-size:20px;
+  font-weight:700;
+  color:var(--dark);
+  margin-bottom:8px;
+  letter-spacing:-0.5px;
+}
+
+.welcome-text p{
+  font-size:13px;
+  color:var(--g600);
+  font-weight:400;
+}
+
+.form-group{
+  margin-bottom:20px;
+}
+
+.form-label{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1.2px;
+  color:var(--g400);
+  margin-bottom:10px;
+}
+
+.form-input{
+  width:100%;
+  padding:10px 14px;
+  background:var(--white);
+  border:2px solid var(--g300);
+  border-radius:8px;
+  font-size:15px;
+  font-family:var(--font);
+  color:var(--dark);
+  outline:none;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-input::placeholder{
+  color:var(--g400);
+  font-weight:400;
+}
+
+.form-input:focus{
+  background:var(--white);
+  border-color:var(--pink);
+  box-shadow:0 0 0 4px rgba(230,88,108,0.08);
+  transform:translateY(-1px);
+}
+
+.form-input:hover{
+  border-color:var(--g400);
+  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+}
+
+.error-message{
+  display:none;
+  background:var(--pink-light);
+  border:1px solid rgba(230,88,108,0.3);
+  color:var(--pink);
+  padding:12px 16px;
+  border-radius:8px;
+  font-size:12px;
+  margin-bottom:20px;
+  animation:shake 0.4s;
+}
+
+.error-message.show{
+  display:block;
+}
+
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-10px)}
+  75%{transform:translateX(10px)}
+}
+
+.login-btn{
+  width:100%;
+  padding:12px 16px;
+  background:linear-gradient(135deg,var(--pink) 0%,var(--pink-dark) 100%);
+  border:none;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  color:#fff;
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:0 4px 14px rgba(230,88,108,0.3);
+  position:relative;
+  overflow:hidden;
+  margin-top: 10px;
+}
+
+.login-btn::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-100%;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transition:left 0.5s;
+}
+
+.login-btn:hover::before{
+  left:100%;
+}
+
+.login-btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 25px rgba(230,88,108,0.4);
+}
+
+.login-btn:active{
+  transform:translateY(-1px);
+}
+
+.login-btn:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
+  transform:none;
+}
+
+.footer-text{
+  text-align:center;
+  margin-top:28px;
+  font-size:11px;
+  color:var(--g400);
+}
+
+.dr-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background:rgba(230,88,108,0.15);
+  border:1px solid rgba(230,88,108,0.3);
+  color:var(--pink);
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:600;
+  margin-top:8px;
+}
+
+/* Loading state */
+.login-btn.loading::after{
+  content:'';
+  display:inline-block;
+  width:12px;
+  height:12px;
+  margin-left:8px;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin 0.6s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+</style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-box">
+    <div class="logo-section">
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#E6586C;stop-opacity:1"/>
+            <stop offset="100%" style="stop-color:#9D5A8B;stop-opacity:1"/>
+          </linearGradient>
+        </defs>
+        <circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGrad)" stroke-width="4"/>
+        <path d="M30 50 L45 65 L70 35" fill="none" stroke="url(#logoGrad)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="logo-name">PERFORMENA</div>
+      <div class="logo-sub">Campaign Analytics</div>
+    </div>
+
+    <div class="welcome-text">
+      <h2>Welcome Back</h2>
+      <p>Sign in to access Danube Dashboard</p>
+    </div>
+
+    <div class="error-message" id="errorMessage">
+      Invalid credentials. Please try again.
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label" for="username">Email</label>
+        <input 
+          type="email" 
+          id="username" 
+          class="form-input" 
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          class="form-input" 
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">
+        Sign In
+      </button>
+    </form>
+
+      </div>
+</div>
+
+<script>
+// Hardcoded credentials
+const VALID_CREDENTIALS = [
+  { username: 'admin@performena.com', password: 'admin123' },
+  { username: 'user@performena.com', password: 'user123' },
+  { username: 'demo@performena.com', password: 'demo123' }
+];
+
+const loginForm = document.getElementById('loginForm');
+const loginBtn = document.getElementById('loginBtn');
+const errorMessage = document.getElementById('errorMessage');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+
+loginForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Hide error message
+  errorMessage.classList.remove('show');
+  
+  // Get input values
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  
+  // Add loading state
+  loginBtn.disabled = true;
+  loginBtn.classList.add('loading');
+  loginBtn.textContent = 'Signing In';
+  
+  // Simulate authentication delay
+  setTimeout(() => {
+    // Check credentials against array
+    const validUser = VALID_CREDENTIALS.find(cred => cred.username === username && cred.password === password);
+    
+    if (validUser) {
+      // Success - redirect to dashboard
+      window.location.href = 'danube_dashboard.html';
+    } else {
+      // Failed - show error
+      errorMessage.classList.add('show');
+      loginBtn.disabled = false;
+      loginBtn.classList.remove('loading');
+      loginBtn.textContent = 'Sign In';
+      
+      // Clear password field
+      passwordInput.value = '';
+      passwordInput.focus();
+    }
+  }, 800);
+});
+
+// Clear error on input
+usernameInput.addEventListener('input', () => errorMessage.classList.remove('show'));
+passwordInput.addEventListener('input', () => errorMessage.classList.remove('show'));
+</script>
+</body>
+</html>
