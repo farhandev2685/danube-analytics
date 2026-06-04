@@ -822,13 +822,17 @@ fetch('campaign_data.json')
     RAW_DATA = data;
     window.RAW_DATA = RAW_DATA;
     
-    // Initialize regions and formats after data loads
-    window.ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].sort();
-    window.ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].sort();
+    // Initialize all filter options from loaded data
+    window.ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+    window.ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+    window.ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+    window.ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
     
-    // Repopulate selects
+    // Repopulate ALL filter selects with data values
     ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
     ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+    ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+    ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
     
     // Update record count
     document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
@@ -839,7 +843,7 @@ fetch('campaign_data.json')
   .catch(err => {
     console.error('Error loading default data:', err);
     showToast('Error loading default data. Please import a JSON file.', 'error');
-  });;
+  });
 
 // ── HELPERS ────────────────────────────────────────────────────────────
 const PINK = '#E6586C', PURPLE = '#9D5A8B', DARK = '#2C2C2C';
@@ -1630,6 +1634,11 @@ document.querySelectorAll('thead th[data-sort]').forEach(th => {
     regPage = 1;
     renderRegionTable(ovData);
   });
+});
+
+// Filters
+['ov-campaign','ov-region','ov-format','ov-month'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', () => { regPage = 1; renderOverview(); });
 });
 
 // Metric toggles
