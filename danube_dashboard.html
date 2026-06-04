@@ -575,6 +575,7 @@ tbody td:first-child{padding-left:18px}
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="cpm"> CPM</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="cpc"> CPC</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="rc"> Reach</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="viewability"> Viewability</label>
             </div>
           </div>
         </div>
@@ -1239,7 +1240,8 @@ function mapImportedData(data) {
     'i': ['i', 'impressions', 'Impressions', 'IMPRESSIONS', 'imps', 'Imps'],
     'cl': ['cl', 'clicks', 'Clicks', 'CLICKS', 'click', 'Click'],
     'sp': ['sp', 'spend', 'Spend', 'SPEND', 'Spends', 'spends', 'SPENDS', 'cost', 'Cost', 'COST'],
-    'rc': ['rc', 'reach', 'Reach', 'REACH', 'unique_reach', 'Unique Reach']
+    'rc': ['rc', 'reach', 'Reach', 'REACH', 'unique_reach', 'Unique Reach'],
+    'viewability': ['viewability', 'Viewability', 'VIEWABILITY', 'Viewability ', ' Viewability', 'viewability ']
   };
   
   // Get the first row to detect column names
@@ -1249,6 +1251,9 @@ function mapImportedData(data) {
   const columnMap = {};
   
   // Build column mapping - check exact match first, then partial match
+  const availableKeys = Object.keys(sampleRow);
+  console.log('Available columns in imported data:', availableKeys);
+  
   for (const [targetField, possibleNames] of Object.entries(fieldMappings)) {
     // First try exact match
     for (const name of possibleNames) {
@@ -1257,9 +1262,8 @@ function mapImportedData(data) {
         break;
       }
     }
-    // If no exact match, try case-insensitive match
+    // If no exact match, try case-insensitive match with trimming
     if (!columnMap[targetField]) {
-      const availableKeys = Object.keys(sampleRow);
       for (const name of possibleNames) {
         const found = availableKeys.find(k => k.toLowerCase().trim() === name.toLowerCase().trim());
         if (found) {
@@ -1268,7 +1272,19 @@ function mapImportedData(data) {
         }
       }
     }
+    // If still no match, try partial match (contains)
+    if (!columnMap[targetField]) {
+      for (const name of possibleNames) {
+        const found = availableKeys.find(k => k.toLowerCase().trim().includes(name.toLowerCase().trim()) || name.toLowerCase().trim().includes(k.toLowerCase().trim()));
+        if (found) {
+          columnMap[targetField] = found;
+          break;
+        }
+      }
+    }
   }
+  
+  console.log('Column mapping result:', columnMap);
   
   // Check if we have all required fields
   const requiredFields = ['m', 'ct', 'f', 'reg', 'i', 'cl', 'sp', 'rc'];
@@ -1282,18 +1298,34 @@ function mapImportedData(data) {
   }
   
   console.log('Column mapping successful:', columnMap);
+  console.log('Viewability column mapped to:', columnMap['viewability']);
   
   // Map the data
-  return data.map(row => ({
-    m: String(row[columnMap['m']] || ''),
-    ct: String(row[columnMap['ct']] || ''),
-    f: String(row[columnMap['f']] || ''),
-    reg: String(row[columnMap['reg']] || ''),
-    i: parseFloat(String(row[columnMap['i']] || '0').replace(/,/g, '')) || 0,
-    cl: parseFloat(String(row[columnMap['cl']] || '0').replace(/,/g, '')) || 0,
-    sp: parseFloat(String(row[columnMap['sp']] || '0').replace(/[$,]/g, '')) || 0,
-    rc: parseFloat(String(row[columnMap['rc']] || '0').replace(/,/g, '')) || 0
-  })).filter(row => row.m && row.ct && row.f && row.reg);
+  const mappedData = data.map((row, idx) => {
+    const viewabilityRaw = columnMap['viewability'] ? row[columnMap['viewability']] : null;
+    const viewabilityVal = viewabilityRaw !== null && viewabilityRaw !== undefined && viewabilityRaw !== '' 
+      ? parseFloat(String(viewabilityRaw).replace(/[%,]/g, '')) 
+      : 0;
+    
+    if (idx < 3) {
+      console.log(`Row ${idx} viewability raw:`, viewabilityRaw, '-> parsed:', viewabilityVal);
+    }
+    
+    return {
+      m: String(row[columnMap['m']] || ''),
+      ct: String(row[columnMap['ct']] || ''),
+      f: String(row[columnMap['f']] || ''),
+      reg: String(row[columnMap['reg']] || ''),
+      i: parseFloat(String(row[columnMap['i']] || '0').replace(/,/g, '')) || 0,
+      cl: parseFloat(String(row[columnMap['cl']] || '0').replace(/,/g, '')) || 0,
+      sp: parseFloat(String(row[columnMap['sp']] || '0').replace(/[$,]/g, '')) || 0,
+      rc: parseFloat(String(row[columnMap['rc']] || '0').replace(/,/g, '')) || 0,
+      viewability: viewabilityVal
+    };
+  }).filter(row => row.m && row.ct && row.f && row.reg);
+  
+  console.log('First mapped row:', mappedData[0]);
+  return mappedData;
 }
 
 function mapGoogleSheetsData(data, requiredFields) {
@@ -1800,30 +1832,41 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   // Get selected metrics
   const metrics = [...document.querySelectorAll('#rb-metrics input:checked')].map(i => i.value);
 
+  console.log('Selected metrics:', metrics);
+  console.log('Sample data has viewability:', rbData.length > 0 ? rbData[0].viewability : 'no data');
+
   if (!dims.length) { showToast('Select at least one Group By dimension', 'error'); return; }
 
   // Aggregate
   const grouped = {};
   rbData.forEach(r => {
     const key = dims.map(d => r[d] || '').join(' | ');
-    if (!grouped[key]) { grouped[key] = {_dims:{}, i:0, cl:0, sp:0, rc:0, cnt:0}; dims.forEach(d=>grouped[key]._dims[d]=r[d]||''); }
+    if (!grouped[key]) { grouped[key] = {_dims:{}, i:0, cl:0, sp:0, rc:0, viewability:0, viewabilityCnt:0, cnt:0}; dims.forEach(d=>grouped[key]._dims[d]=r[d]||''); }
     grouped[key].i  += r.i;
     grouped[key].cl += r.cl;
     grouped[key].sp += r.sp;
     grouped[key].rc += r.rc;
     grouped[key].cnt++;
+    // Aggregate viewability - check for any numeric value
+    const viewVal = parseFloat(r.viewability);
+    if (!isNaN(viewVal)) {
+      grouped[key].viewability += viewVal;
+      grouped[key].viewabilityCnt++;
+    }
   });
 
   const rows = Object.values(grouped).map(v => {
     const ctr = v.i > 0 ? v.cl/v.i*100 : 0;
     const cpm = v.i > 0 ? v.sp/v.i*1000 : 0;
     const cpc = v.cl > 0 ? v.sp/v.cl : 0;
-    return { ...v._dims, i:v.i, cl:v.cl, sp:v.sp, rc:v.rc, ctr, cpm, cpc, cnt:v.cnt };
+    const viewability = v.viewabilityCnt > 0 ? v.viewability / v.viewabilityCnt : 0;
+    console.log('Row viewability:', viewability, 'count:', v.viewabilityCnt);
+    return { ...v._dims, i:v.i, cl:v.cl, sp:v.sp, rc:v.rc, ctr, cpm, cpc, viewability, cnt:v.cnt };
   }).sort((a,b) => b.i - a.i);
 
   // Render header
   const dimLabels = {reg:'Region', ct:'Campaign', f:'Format', m:'Month'};
-  const metricLabelsRB = {i:'Impressions', cl:'Clicks', ctr:'CTR', sp:'Spend', cpm:'CPM', cpc:'CPC', rc:'Reach'};
+  const metricLabelsRB = {i:'Impressions', cl:'Clicks', ctr:'CTR', sp:'Spend', cpm:'CPM', cpc:'CPC', rc:'Reach', viewability:'Viewability'};
   const allCols = [...dims, ...metrics];
 
   document.getElementById('rb-thead').innerHTML = '<tr>' + allCols.map(c =>
@@ -1845,6 +1888,7 @@ document.getElementById('rb-generate').addEventListener('click', () => {
       if (c === 'cpm') return `<td>$${r.cpm.toFixed(2)}</td>`;
       if (c === 'cpc') return `<td>$${r.cpc.toFixed(2)}</td>`;
       if (c === 'rc') return `<td>${fmt(r.rc,'imp')}</td>`;
+      if (c === 'viewability') return `<td>${r.viewability !== undefined && r.viewability !== null ? r.viewability.toFixed(2) + '%' : '-'}</td>`;
       if (c === 'm') return `<td>${MONTH_LABELS[r.m]||r.m}</td>`;
       return `<td>${r[c]||''}</td>`;
     }).join('') + '</tr>').join('');
