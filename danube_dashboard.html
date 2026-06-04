@@ -1858,6 +1858,8 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   console.log('Selected metrics:', metrics);
   console.log('Total records:', rbData.length);
   console.log('Sample row:', rbData[0]);
+  console.log('Sample row campaign:', rbData[0]?.campaign);
+  console.log('Sample row viewability:', rbData[0]?.viewability);
 
   if (!dims.length && !metrics.length) { 
     showToast('Select at least one column to display', 'error'); 
@@ -1872,6 +1874,8 @@ document.getElementById('rb-generate').addEventListener('click', () => {
     const cpc = r.cl > 0 ? (r.sp / r.cl) : 0;
     return { ...r, ctr, cpm, cpc };
   });
+  
+  console.log('First processed row:', rows[0]);
 
   // Column labels
   const colLabels = {
@@ -1911,8 +1915,12 @@ document.getElementById('rb-generate').addEventListener('click', () => {
       if (c === 'cpm') return `<td>$${r.cpm.toFixed(2)}</td>`;
       if (c === 'cpc') return `<td>$${r.cpc.toFixed(2)}</td>`;
       if (c === 'rc') return `<td>${r.rc.toLocaleString()}</td>`;
-      if (c === 'viewability') return `<td>${r.viewability !== undefined && r.viewability !== null && r.viewability !== 0 ? r.viewability.toFixed(2) + '%' : (r.viewability === 0 ? '0%' : '-')}</td>`;
+      if (c === 'viewability') return `<td>${typeof r.viewability === 'number' ? r.viewability.toFixed(2) + '%' : '-'}</td>`;
       if (c === 'm') return `<td>${r.m || ''}</td>`;
+      if (c === 'campaign') return `<td>${r.campaign || ''}</td>`;
+      if (c === 'ct') return `<td>${r.ct || ''}</td>`;
+      if (c === 'f') return `<td>${r.f || ''}</td>`;
+      if (c === 'reg') return `<td>${r.reg || ''}</td>`;
       return `<td>${r[c] !== undefined && r[c] !== null ? r[c] : ''}</td>`;
     }).join('') + '</tr>').join('');
 
