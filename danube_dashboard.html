@@ -572,9 +572,6 @@ tbody td:first-child{padding-left:18px}
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Campaign Filter</div>
             <select class="f-sel" style="width:100%" id="rb-campaign">
               <option value="">All Campaigns</option>
-              <option value="Awareness">Awareness</option>
-              <option value="Eid Sale">Eid Sale</option>
-              <option value="Pay Week">Pay Week</option>
             </select>
           </div>
           <div>
@@ -586,6 +583,16 @@ tbody td:first-child{padding-left:18px}
             <select class="f-sel" style="width:100%" id="rb-month">
               <option value="">All Months</option>
             </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Date From</div>
+            <input type="date" class="f-sel" style="width:100%" id="rb-date-from">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Date To</div>
+            <input type="date" class="f-sel" style="width:100%" id="rb-date-to">
           </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:20px">
@@ -1823,8 +1830,23 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   const ct = document.getElementById('rb-campaign').value;
   const reg = document.getElementById('rb-region').value;
   const m = document.getElementById('rb-month').value;
+  const dateFrom = document.getElementById('rb-date-from').value;
+  const dateTo = document.getElementById('rb-date-to').value;
 
   rbData = filterData({ ct, reg, m });
+  
+  // Apply date range filter if specified
+  if (dateFrom || dateTo) {
+    rbData = rbData.filter(r => {
+      const rowDate = r.m;
+      if (!rowDate) return false;
+      
+      const fromMatch = !dateFrom || rowDate >= dateFrom;
+      const toMatch = !dateTo || rowDate <= dateTo;
+      return fromMatch && toMatch;
+    });
+    console.log('Date range filter applied:', dateFrom, 'to', dateTo, '- Records:', rbData.length);
+  }
 
   // Get selected columns to display
   const dims = [...document.querySelectorAll('#rb-group-by input:checked')].map(i => i.value);
@@ -1930,6 +1952,7 @@ document.getElementById('rb-generate').addEventListener('click', () => {
 
 document.getElementById('rb-clear').addEventListener('click', () => {
   ['rb-campaign','rb-region','rb-month'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['rb-date-from','rb-date-to'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.querySelectorAll('#rb-group-by input').forEach((cb,i) => cb.checked = i<2);
   document.querySelectorAll('#rb-metrics input').forEach((cb,i) => cb.checked = i<4);
   document.getElementById('rb-sub').textContent = 'Configure filters above and click Generate Report';
