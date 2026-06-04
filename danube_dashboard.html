@@ -567,7 +567,7 @@ tbody td:first-child{padding-left:18px}
             </div>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:20px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Campaign Filter</div>
             <select class="f-sel" style="width:100%" id="rb-campaign">
@@ -576,12 +576,8 @@ tbody td:first-child{padding-left:18px}
           </div>
           <div>
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Region Filter</div>
-            <select class="f-sel" style="width:100%" id="rb-region"><option value="">All Regions</option></select>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:8px">Month Filter</div>
-            <select class="f-sel" style="width:100%" id="rb-month">
-              <option value="">All Months</option>
+            <select class="f-sel" style="width:100%" id="rb-region">
+              <option value="">All Regions</option>
             </select>
           </div>
         </div>
@@ -815,8 +811,8 @@ function initializeDashboard(data) {
   ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
   ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
   ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-  // Show actual month values from CSV (not mapped labels) to ensure they match your data
-  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+  // Month filters: populate from CSV data (rb-month removed from report builder)
+  ['ov-month','geo-month','tr-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
   
   // Update record count
   document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
@@ -1836,27 +1832,30 @@ let rbData = [], rbPage = 1, rbPerPage = 15;
 document.getElementById('rb-generate').addEventListener('click', () => {
   const ct = document.getElementById('rb-campaign').value;
   const reg = document.getElementById('rb-region').value;
-  const m = document.getElementById('rb-month').value;
   const dateFrom = document.getElementById('rb-date-from').value;
   const dateTo = document.getElementById('rb-date-to').value;
 
-  console.log('Report Builder Filters:', { ct, reg, m, dateFrom, dateTo });
+  console.log('Report Builder Filters:', { ct, reg, dateFrom, dateTo });
   console.log('RAW_DATA length:', RAW_DATA.length);
-  
-  rbData = filterData({ ct, reg, m });
-  console.log('Filtered data length:', rbData.length);
-  
-  // Apply date range filter if specified
+
+  // Start with campaign and region filter
+  rbData = filterData({ ct, reg });
+  console.log('After campaign/region filter:', rbData.length);
+
+  // Apply date range filter against the raw date field (m) from CSV
   if (dateFrom || dateTo) {
     rbData = rbData.filter(r => {
-      const rowDate = r.m;
-      if (!rowDate) return false;
-      
-      const fromMatch = !dateFrom || rowDate >= dateFrom;
-      const toMatch = !dateTo || rowDate <= dateTo;
+      if (!r.m) return false;
+      // Parse the date from the CSV - try to convert to comparable format
+      const rowDate = new Date(r.m);
+      const from = dateFrom ? new Date(dateFrom) : null;
+      const to = dateTo ? new Date(dateTo) : null;
+      if (isNaN(rowDate)) return true; // if unparseable, don't filter out
+      const fromMatch = !from || rowDate >= from;
+      const toMatch = !to || rowDate <= to;
       return fromMatch && toMatch;
     });
-    console.log('Date range filter applied:', dateFrom, 'to', dateTo, '- Records:', rbData.length);
+    console.log('After date range filter:', rbData.length);
   }
 
   // Get selected columns to display
@@ -1962,7 +1961,7 @@ document.getElementById('rb-generate').addEventListener('click', () => {
 });
 
 document.getElementById('rb-clear').addEventListener('click', () => {
-  ['rb-campaign','rb-region','rb-month'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['rb-campaign','rb-region'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   ['rb-date-from','rb-date-to'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.querySelectorAll('#rb-group-by input').forEach((cb,i) => cb.checked = i<2);
   document.querySelectorAll('#rb-metrics input').forEach((cb,i) => cb.checked = i<4);
@@ -1971,6 +1970,19 @@ document.getElementById('rb-clear').addEventListener('click', () => {
   document.getElementById('rb-tbody').innerHTML = '';
   document.getElementById('rb-pagination').innerHTML = '';
   showToast('Report builder cleared');
+});
+
+// Auto-generate report on filter change
+['rb-campaign','rb-region'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', () => {
+    document.getElementById('rb-generate').click();
+  });
+});
+// Auto-generate on date range change
+['rb-date-from','rb-date-to'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', () => {
+    document.getElementById('rb-generate').click();
+  });
 });
 
 document.getElementById('rb-export').addEventListener('click', () => {
