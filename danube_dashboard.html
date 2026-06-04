@@ -1829,8 +1829,7 @@ function renderTrendsPage() {
 // ── REPORT BUILDER ─────────────────────────────────────────────────────
 let rbData = [], rbPage = 1, rbPerPage = 15;
 
-// populate rb region select
-populateSelect('rb-region', ALL_REGIONS);
+// Note: rb-region and rb-month are populated in initializeDashboard() when data loads
 
 document.getElementById('rb-generate').addEventListener('click', () => {
   const ct = document.getElementById('rb-campaign').value;
@@ -1839,7 +1838,11 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   const dateFrom = document.getElementById('rb-date-from').value;
   const dateTo = document.getElementById('rb-date-to').value;
 
+  console.log('Report Builder Filters:', { ct, reg, m, dateFrom, dateTo });
+  console.log('RAW_DATA length:', RAW_DATA.length);
+  
   rbData = filterData({ ct, reg, m });
+  console.log('Filtered data length:', rbData.length);
   
   // Apply date range filter if specified
   if (dateFrom || dateTo) {
