@@ -793,35 +793,65 @@ tbody td:first-child{padding-left:18px}
 <script>
 let RAW_DATA = [];
 
-// Load default data from campaign_data.json
-fetch('campaign_data.json')
-  .then(response => response.json())
-  .then(data => {
-    RAW_DATA = data;
-    window.RAW_DATA = RAW_DATA;
-    
-    // Initialize all filter options from loaded data
-    window.ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
-    window.ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
-    window.ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
-    window.ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
-    
-    // Repopulate ALL filter selects with data values
-    ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
-    ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
-    ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-    ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
-    
-    // Update record count
-    document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
-    
-    // Initialize overview page
-    initOverviewPage();
-  })
-  .catch(err => {
-    console.error('Error loading default data:', err);
-    showToast('Error loading default data. Please import a JSON file.', 'error');
-  });
+// Function to initialize dashboard with data
+function initializeDashboard(data) {
+  RAW_DATA = data;
+  window.RAW_DATA = RAW_DATA;
+  
+  // Initialize all filter options from loaded data
+  window.ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+  window.ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+  window.ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+  window.ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
+  
+  // Repopulate ALL filter selects with data values
+  ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
+  ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+  ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+  
+  // Update record count
+  document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
+  
+  // Initialize overview page
+  initOverviewPage();
+  
+  console.log('Dashboard initialized with', RAW_DATA.length, 'records');
+  console.log('Sample data:', RAW_DATA[0]);
+}
+
+// Check for saved data in localStorage first, then fall back to campaign_data.json
+const savedData = localStorage.getItem('dashboardData');
+if (savedData) {
+  try {
+    const parsedData = JSON.parse(savedData);
+    if (parsedData && parsedData.length > 0) {
+      console.log('Loading saved data from localStorage');
+      initializeDashboard(parsedData);
+    } else {
+      throw new Error('Empty saved data');
+    }
+  } catch (e) {
+    console.error('Error loading saved data:', e);
+    localStorage.removeItem('dashboardData');
+    loadDefaultData();
+  }
+} else {
+  loadDefaultData();
+}
+
+function loadDefaultData() {
+  fetch('campaign_data.json')
+    .then(response => response.json())
+    .then(data => {
+      console.log('Loading default data from campaign_data.json');
+      initializeDashboard(data);
+    })
+    .catch(err => {
+      console.error('Error loading default data:', err);
+      showToast('Error loading default data. Please import a JSON file.', 'error');
+    });
+}
 
 // ── HELPERS ────────────────────────────────────────────────────────────
 const PINK = '#E6586C', PURPLE = '#9D5A8B', DARK = '#2C2C2C';
@@ -1026,33 +1056,17 @@ document.getElementById('import-modal-import').addEventListener('click', async (
           throw new Error('Please upload a .json or .csv file');
         }
         
-        // Update RAW_DATA
+        // Update RAW_DATA and save to localStorage
         RAW_DATA = importedData;
         window.RAW_DATA = importedData;
+        localStorage.setItem('dashboardData', JSON.stringify(importedData));
+        console.log('Data saved to localStorage:', importedData.length, 'records');
         
-        // Update all filter options from imported data
-        ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
-        ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
-        const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
-        const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
-        
-        window.ALL_REGIONS = ALL_REGIONS;
-        window.ALL_FORMATS = ALL_FORMATS;
-        
-        // Repopulate all filter selects with imported data values
-        ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
-        ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
-        ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-        ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
-        
-        // Update record count
-        const recordSpan = document.querySelector('.topbar-sub span');
-        if (recordSpan) {
-          recordSpan.textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
-        }
+        // Re-initialize dashboard with new data
+        initializeDashboard(importedData);
         
         // Refresh all pages
-        initOverviewPage();
+        ovInited = false;
         if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
         if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
         if (document.getElementById('page-trends').classList.contains('active')) initTrendsPage();
@@ -1134,30 +1148,15 @@ document.getElementById('import-modal-import').addEventListener('click', async (
         throw new Error(`No valid data found. Required columns: Date, Campaign, Creative Format, Region, Impressions, Clicks, Spends, Reach. Found: ${availableColumns}`);
       }
       
+      // Update RAW_DATA and save to localStorage
       RAW_DATA = mappedData;
       window.RAW_DATA = mappedData;
+      localStorage.setItem('dashboardData', JSON.stringify(mappedData));
+      console.log('Data saved to localStorage:', mappedData.length, 'records');
       
-      // Update all filter options from imported data
-      ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
-      ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
-      const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
-      const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
-      
-      window.ALL_REGIONS = ALL_REGIONS;
-      window.ALL_FORMATS = ALL_FORMATS;
-      
-      // Repopulate all filter selects with imported data values
-      ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
-      ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
-      ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-      ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
-      
-      const recordSpan = document.querySelector('.topbar-sub span');
-      if (recordSpan) {
-        recordSpan.textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
-      }
-      
-      initOverviewPage();
+      // Re-initialize dashboard with new data
+      ovInited = false;
+      initializeDashboard(mappedData);
       if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
       if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
       if (document.getElementById('page-trends').classList.contains('active')) initTrendsPage();
