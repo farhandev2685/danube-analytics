@@ -1073,7 +1073,7 @@ document.getElementById('import-modal-import').addEventListener('click', async (
         initializeDashboard(importedData);
         
         // Refresh all pages
-        ovInited = false;
+        reinitializeOverview();
         if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
         if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
         if (document.getElementById('page-trends').classList.contains('active')) initTrendsPage();
@@ -1162,7 +1162,7 @@ document.getElementById('import-modal-import').addEventListener('click', async (
       console.log('Data saved to localStorage:', mappedData.length, 'records');
       
       // Re-initialize dashboard with new data
-      ovInited = false;
+      reinitializeOverview();
       initializeDashboard(mappedData);
       if (document.getElementById('page-geo').classList.contains('active')) initGeoPage();
       if (document.getElementById('page-formats').classList.contains('active')) initFormatsPage();
@@ -1427,7 +1427,7 @@ let currentMetric = 'i';
 const metricLabels = {i:'Impressions', cl:'Clicks', sp:'Spend', ctr:'CTR'};
 let sortCol = 'i', sortDir = -1;
 let regPage = 1, regPerPage = 8;
-let ovData = RAW_DATA;
+let ovData = []; // Don't set to RAW_DATA at module level - will be set in renderOverview
 
 function getOvFilters() {
   return {
@@ -1660,6 +1660,12 @@ function initOverviewPage() {
   });
   renderOverview();
   ovInited = true;
+}
+
+// Force re-initialization (used after data changes)
+function reinitializeOverview() {
+  ovInited = false;
+  initOverviewPage();
 }
 
 // ── GEO PAGE ───────────────────────────────────────────────────────────
