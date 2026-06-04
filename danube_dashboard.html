@@ -560,7 +560,8 @@ tbody td:first-child{padding-left:18px}
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--g600);margin-bottom:10px">Group By</div>
             <div style="display:flex;flex-direction:column;gap:8px" id="rb-group-by">
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="reg"> Region</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="ct"> Campaign Type</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="campaign"> Campaign Name</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="ct"> Campaign Type</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="f"> Creative Format</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="m"> Month</label>
             </div>
@@ -1234,7 +1235,8 @@ function mapImportedData(data) {
   // Based on user's columns: Date, Campaign, Campaign Type, Creative Format, Region, Country, Impressions, Clicks, CTR, Frequency, Reach, Spends, CPC, CPM, Views, Completion Rate, CPCV, CPS, Conversions, Revenue, ROAS, Viewability
   const fieldMappings = {
     'm': ['m', 'month', 'Month', 'MONTH', 'date', 'Date', 'DATE'],
-    'ct': ['ct', 'campaign', 'Campaign', 'CAMPAIGN', 'Campaign Type', 'campaign_type', 'CampaignType'],
+    'campaign': ['campaign', 'Campaign', 'CAMPAIGN', 'Campaign Name', 'campaign_name', 'CampaignName'],
+    'ct': ['ct', 'Campaign Type', 'campaign_type', 'CampaignType', 'type', 'Type'],
     'f': ['f', 'format', 'Format', 'FORMAT', 'Creative Format', 'creative_format', 'CreativeFormat', 'ad_format', 'Ad Format'],
     'reg': ['reg', 'region', 'Region', 'REGION', 'Country', 'country', 'COUNTRY', 'location', 'Location', 'geo', 'Geo'],
     'i': ['i', 'impressions', 'Impressions', 'IMPRESSIONS', 'imps', 'Imps'],
@@ -1286,11 +1288,16 @@ function mapImportedData(data) {
   
   console.log('Column mapping result:', columnMap);
   
-  // Check if we have all required fields
-  const requiredFields = ['m', 'ct', 'f', 'reg', 'i', 'cl', 'sp', 'rc'];
+  // Check if we have all required fields (campaign is optional, ct can be derived from campaign if not present)
+  const requiredFields = ['m', 'f', 'reg', 'i', 'cl', 'sp', 'rc'];
   const missingFields = requiredFields.filter(f => !columnMap[f]);
   
-  if (missingFields.length > 0) {
+  // If ct is missing but campaign exists, use campaign for ct
+  if (!columnMap['ct'] && columnMap['campaign']) {
+    columnMap['ct'] = columnMap['campaign'];
+  }
+  
+  if (missingFields.length > 0 || !columnMap['ct']) {
     console.error('Missing columns:', missingFields);
     console.error('Column mapping:', columnMap);
     console.error('Available columns:', Object.keys(sampleRow));
@@ -1299,6 +1306,7 @@ function mapImportedData(data) {
   
   console.log('Column mapping successful:', columnMap);
   console.log('Viewability column mapped to:', columnMap['viewability']);
+  console.log('Campaign column mapped to:', columnMap['campaign']);
   
   // Map the data
   const mappedData = data.map((row, idx) => {
@@ -1309,10 +1317,12 @@ function mapImportedData(data) {
     
     if (idx < 3) {
       console.log(`Row ${idx} viewability raw:`, viewabilityRaw, '-> parsed:', viewabilityVal);
+      console.log(`Row ${idx} campaign:`, columnMap['campaign'] ? row[columnMap['campaign']] : 'N/A');
     }
     
     return {
       m: String(row[columnMap['m']] || ''),
+      campaign: columnMap['campaign'] ? String(row[columnMap['campaign']] || '') : '',
       ct: String(row[columnMap['ct']] || ''),
       f: String(row[columnMap['f']] || ''),
       reg: String(row[columnMap['reg']] || ''),
@@ -1841,7 +1851,10 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   const grouped = {};
   rbData.forEach(r => {
     const key = dims.map(d => r[d] || '').join(' | ');
-    if (!grouped[key]) { grouped[key] = {_dims:{}, i:0, cl:0, sp:0, rc:0, viewability:0, viewabilityCnt:0, cnt:0}; dims.forEach(d=>grouped[key]._dims[d]=r[d]||''); }
+    if (!grouped[key]) { 
+      grouped[key] = {_dims:{}, i:0, cl:0, sp:0, rc:0, viewability:0, viewabilityCnt:0, cnt:0}; 
+      dims.forEach(d => grouped[key]._dims[d] = r[d] || ''); 
+    }
     grouped[key].i  += r.i;
     grouped[key].cl += r.cl;
     grouped[key].sp += r.sp;
@@ -1849,11 +1862,13 @@ document.getElementById('rb-generate').addEventListener('click', () => {
     grouped[key].cnt++;
     // Aggregate viewability - check for any numeric value
     const viewVal = parseFloat(r.viewability);
-    if (!isNaN(viewVal)) {
+    if (!isNaN(viewVal) && viewVal > 0) {
       grouped[key].viewability += viewVal;
       grouped[key].viewabilityCnt++;
     }
   });
+  
+  console.log('Grouped data sample:', Object.values(grouped)[0]);
 
   const rows = Object.values(grouped).map(v => {
     const ctr = v.i > 0 ? v.cl/v.i*100 : 0;
@@ -1865,7 +1880,7 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   }).sort((a,b) => b.i - a.i);
 
   // Render header
-  const dimLabels = {reg:'Region', ct:'Campaign', f:'Format', m:'Month'};
+  const dimLabels = {reg:'Region', campaign:'Campaign Name', ct:'Campaign Type', f:'Format', m:'Month'};
   const metricLabelsRB = {i:'Impressions', cl:'Clicks', ctr:'CTR', sp:'Spend', cpm:'CPM', cpc:'CPC', rc:'Reach', viewability:'Viewability'};
   const allCols = [...dims, ...metrics];
 
