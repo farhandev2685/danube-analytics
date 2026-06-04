@@ -549,9 +549,9 @@ tbody td:first-child{padding-left:18px}
             <div style="display:flex;flex-direction:column;gap:8px" id="rb-group-by">
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="reg"> Region</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="campaign"> Campaign Name</label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" checked value="m"> Date</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="ct"> Campaign Type</label>
               <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="f"> Creative Format</label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="m"> Month</label>
             </div>
           </div>
           <div>
@@ -808,12 +808,24 @@ function initializeDashboard(data) {
   window.ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
   window.ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
   
+  console.log('=== DASHBOARD INIT DEBUG ===');
+  console.log('ALL_REGIONS:', ALL_REGIONS);
+  console.log('ALL_CAMPAIGNS:', ALL_CAMPAIGNS);
+  console.log('ALL_MONTHS:', ALL_MONTHS);
+  
   // Repopulate ALL filter selects with data values
   ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
   ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
   ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
   // Month filters: populate from CSV data (rb-month removed from report builder)
   ['ov-month','geo-month','tr-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
+  
+  // Verify rb-region was populated
+  const rbRegion = document.getElementById('rb-region');
+  console.log('rb-region options count:', rbRegion ? rbRegion.options.length : 'NOT FOUND');
+  if (rbRegion) {
+    console.log('rb-region values:', Array.from(rbRegion.options).map(o => o.value));
+  }
   
   // Update record count
   document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
@@ -825,24 +837,53 @@ function initializeDashboard(data) {
   console.log('Sample data:', RAW_DATA[0]);
 }
 
+// Check if data was manually cleared
+const dataCleared = localStorage.getItem('dashboardDataCleared') === 'true';
+
 // Check for saved data in localStorage first, then fall back to campaign_data.json
 const savedData = localStorage.getItem('dashboardData');
-if (savedData) {
+if (savedData && !dataCleared) {
   try {
     const parsedData = JSON.parse(savedData);
     if (parsedData && parsedData.length > 0) {
       console.log('Loading saved data from localStorage');
-      initializeDashboard(parsedData);
+      // Ensure all required fields exist on every record
+      const validatedData = parsedData.map(r => ({
+        m: r.m || '',
+        campaign: r.campaign || r.ct || '',
+        ct: r.ct || '',
+        f: r.f || '',
+        reg: r.reg || '',
+        i: parseFloat(r.i) || 0,
+        cl: parseFloat(r.cl) || 0,
+        sp: parseFloat(r.sp) || 0,
+        rc: parseFloat(r.rc) || 0,
+        viewability: parseFloat(r.viewability) || 0
+      }));
+      initializeDashboard(validatedData);
     } else {
       throw new Error('Empty saved data');
     }
   } catch (e) {
     console.error('Error loading saved data:', e);
     localStorage.removeItem('dashboardData');
+    localStorage.removeItem('dashboardDataCleared');
     loadDefaultData();
   }
-} else {
+} else if (!dataCleared) {
+  // Only load default data if not manually cleared
   loadDefaultData();
+} else {
+  console.log('Data was manually cleared - starting with empty state');
+  // Start with empty data
+  RAW_DATA = [];
+  window.RAW_DATA = [];
+  window.ALL_REGIONS = [];
+  window.ALL_FORMATS = [];
+  window.ALL_CAMPAIGNS = [];
+  window.ALL_MONTHS = [];
+  document.querySelector('.topbar-sub span').textContent = '· No data loaded · Import CSV to begin';
+  initOverviewPage();
 }
 
 function loadDefaultData() {
@@ -850,7 +891,13 @@ function loadDefaultData() {
     .then(response => response.json())
     .then(data => {
       console.log('Loading default data from campaign_data.json');
-      initializeDashboard(data);
+      // Add campaign and viewability fields if missing
+      const enrichedData = data.map(r => ({
+        ...r,
+        campaign: r.campaign || r.ct || '',
+        viewability: r.viewability || 0
+      }));
+      initializeDashboard(enrichedData);
     })
     .catch(err => {
       console.error('Error loading default data:', err);
@@ -876,13 +923,53 @@ function fmt(n, type = 'num') {
   return n.toLocaleString();
 }
 
+// Robust date parser for various CSV date formats
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+  
+  // Try standard ISO format (YYYY-MM-DD or YYYY-MM)
+  let d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+  
+  // Try DD-MMM-YY format (e.g., "1-Jun-26")
+  const monthMap = {
+    'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+    'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+  };
+  const ddMmmYy = dateStr.match(/(\d{1,2})[-/]([a-zA-Z]{3})[-/](\d{2,4})/);
+  if (ddMmmYy) {
+    const day = parseInt(ddMmmYy[1]);
+    const month = monthMap[ddMmmYy[2].toLowerCase()];
+    let year = parseInt(ddMmmYy[3]);
+    if (year < 100) year += 2000; // Assume 2000s for 2-digit years
+    if (month !== undefined) {
+      d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+  
+  // Try DD/MM/YYYY or DD-MM-YYYY
+  const parts = dateStr.split(/[\/\-]/);
+  if (parts.length === 3) {
+    // Try DD/MM/YYYY
+    d = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    if (!isNaN(d.getTime())) return d;
+    // Try MM/DD/YYYY
+    d = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+    if (!isNaN(d.getTime())) return d;
+  }
+  
+  return null;
+}
+
 function filterData(opts = {}) {
-  return RAW_DATA.filter(r =>
-    (!opts.ct || r.ct === opts.ct) &&
-    (!opts.reg || r.reg === opts.reg) &&
-    (!opts.f || r.f === opts.f) &&
-    (!opts.m || r.m === opts.m)
-  );
+  return RAW_DATA.filter(r => {
+    const ctMatch = !opts.ct || r.ct?.trim().toLowerCase() === opts.ct.trim().toLowerCase();
+    const regMatch = !opts.reg || r.reg?.trim().toLowerCase() === opts.reg.trim().toLowerCase();
+    const fMatch = !opts.f || r.f?.trim().toLowerCase() === opts.f.trim().toLowerCase();
+    const mMatch = !opts.m || r.m?.trim().toLowerCase() === opts.m.trim().toLowerCase();
+    return ctMatch && regMatch && fMatch && mMatch;
+  });
 }
 
 function aggBy(data, key) {
@@ -989,18 +1076,6 @@ document.getElementById('btn-import-data').addEventListener('click', () => {
   document.getElementById('modal-import').classList.add('open');
 });
 
-// Clear data button handler
-document.getElementById('btn-clear-data').addEventListener('click', () => {
-  if (confirm('Are you sure you want to clear all imported data? This will reset to the default data.')) {
-    localStorage.removeItem('dashboardData');
-    RAW_DATA = [];
-    window.RAW_DATA = [];
-    ovInited = false;
-    loadDefaultData();
-    showToast('✓ Data cleared - reset to default', 'success');
-  }
-});
-
 // Modal close handlers
 document.getElementById('import-modal-close').addEventListener('click', () => {
   document.getElementById('modal-import').classList.remove('open');
@@ -1074,11 +1149,24 @@ document.getElementById('import-modal-import').addEventListener('click', async (
           throw new Error('Please upload a .json or .csv file');
         }
         
-        // Update RAW_DATA and save to localStorage
-        RAW_DATA = importedData;
-        window.RAW_DATA = importedData;
-        localStorage.setItem('dashboardData', JSON.stringify(importedData));
-        console.log('Data saved to localStorage:', importedData.length, 'records');
+        // Validate and save to localStorage
+        const validatedData = importedData.map(r => ({
+          m: r.m || '',
+          campaign: r.campaign || r.ct || '',
+          ct: r.ct || '',
+          f: r.f || '',
+          reg: r.reg || '',
+          i: parseFloat(r.i) || 0,
+          cl: parseFloat(r.cl) || 0,
+          sp: parseFloat(r.sp) || 0,
+          rc: parseFloat(r.rc) || 0,
+          viewability: parseFloat(r.viewability) || 0
+        }));
+        RAW_DATA = validatedData;
+        window.RAW_DATA = validatedData;
+        localStorage.setItem('dashboardData', JSON.stringify(validatedData));
+        localStorage.removeItem('dashboardDataCleared'); // Clear the cleared flag
+        console.log('Data saved to localStorage:', validatedData.length, 'records');
         
         // Re-initialize dashboard with new data
         initializeDashboard(importedData);
@@ -1166,11 +1254,24 @@ document.getElementById('import-modal-import').addEventListener('click', async (
         throw new Error(`No valid data found. Required columns: Date, Campaign, Creative Format, Region, Impressions, Clicks, Spends, Reach. Found: ${availableColumns}`);
       }
       
-      // Update RAW_DATA and save to localStorage
-      RAW_DATA = mappedData;
-      window.RAW_DATA = mappedData;
-      localStorage.setItem('dashboardData', JSON.stringify(mappedData));
-      console.log('Data saved to localStorage:', mappedData.length, 'records');
+      // Validate and save to localStorage
+      const validatedData = mappedData.map(r => ({
+        m: r.m || '',
+        campaign: r.campaign || r.ct || '',
+        ct: r.ct || '',
+        f: r.f || '',
+        reg: r.reg || '',
+        i: parseFloat(r.i) || 0,
+        cl: parseFloat(r.cl) || 0,
+        sp: parseFloat(r.sp) || 0,
+        rc: parseFloat(r.rc) || 0,
+        viewability: parseFloat(r.viewability) || 0
+      }));
+      RAW_DATA = validatedData;
+      window.RAW_DATA = validatedData;
+      localStorage.setItem('dashboardData', JSON.stringify(validatedData));
+      localStorage.removeItem('dashboardDataCleared'); // Clear the cleared flag
+      console.log('Data saved to localStorage:', validatedData.length, 'records');
       
       // Re-initialize dashboard with new data
       reinitializeOverview();
@@ -1848,28 +1949,58 @@ document.getElementById('rb-generate').addEventListener('click', () => {
   const dateFrom = document.getElementById('rb-date-from').value;
   const dateTo = document.getElementById('rb-date-to').value;
 
-  console.log('Report Builder Filters:', { ct, reg, dateFrom, dateTo });
+  console.log('=== REPORT BUILDER DEBUG ===');
+  console.log('Filters:', { ct, reg, dateFrom, dateTo });
   console.log('RAW_DATA length:', RAW_DATA.length);
+  if (RAW_DATA.length > 0) {
+    console.log('Sample RAW_DATA[0]:', RAW_DATA[0]);
+    console.log('Unique regions in data:', [...new Set(RAW_DATA.map(r => r.reg))]);
+    console.log('Unique campaigns in data:', [...new Set(RAW_DATA.map(r => r.ct))]);
+    console.log('Unique dates in data:', [...new Set(RAW_DATA.map(r => r.m))].slice(0, 10));
+  }
 
-  // Start with campaign and region filter
-  rbData = filterData({ ct, reg });
-  console.log('After campaign/region filter:', rbData.length);
+  // Start with all data, then filter
+  rbData = [...RAW_DATA];
+  
+  // Apply campaign filter (case-insensitive)
+  if (ct) {
+    rbData = rbData.filter(r => r.ct?.trim().toLowerCase() === ct.trim().toLowerCase());
+    console.log('After campaign filter:', rbData.length);
+  }
+  
+  // Apply region filter (case-insensitive)
+  if (reg) {
+    rbData = rbData.filter(r => r.reg?.trim().toLowerCase() === reg.trim().toLowerCase());
+    console.log('After region filter:', rbData.length);
+  }
 
   // Apply date range filter against the raw date field (m) from CSV
   if (dateFrom || dateTo) {
+    const fromDate = dateFrom ? parseDate(dateFrom) : null;
+    const toDate = dateTo ? parseDate(dateTo) : null;
+    console.log('Date range:', { from: fromDate, to: toDate });
+    
     rbData = rbData.filter(r => {
       if (!r.m) return false;
-      // Parse the date from the CSV - try to convert to comparable format
-      const rowDate = new Date(r.m);
-      const from = dateFrom ? new Date(dateFrom) : null;
-      const to = dateTo ? new Date(dateTo) : null;
-      if (isNaN(rowDate)) return true; // if unparseable, don't filter out
-      const fromMatch = !from || rowDate >= from;
-      const toMatch = !to || rowDate <= to;
+      const rowDate = parseDate(r.m);
+      if (!rowDate) {
+        console.log('Unparseable date:', r.m);
+        return true; // if unparseable, don't filter out
+      }
+      
+      // Normalize to start of day for comparison
+      rowDate.setHours(0, 0, 0, 0);
+      if (fromDate) fromDate.setHours(0, 0, 0, 0);
+      if (toDate) toDate.setHours(23, 59, 59, 999); // End of day for 'to' date
+      
+      const fromMatch = !fromDate || rowDate >= fromDate;
+      const toMatch = !toDate || rowDate <= toDate;
       return fromMatch && toMatch;
     });
     console.log('After date range filter:', rbData.length);
   }
+  
+  console.log('Final filtered data:', rbData.length);
 
   // Get selected columns to display
   const dims = [...document.querySelectorAll('#rb-group-by input:checked')].map(i => i.value);
@@ -2030,6 +2161,59 @@ document.querySelectorAll('[data-export]').forEach(btn => {
 
 // ── INIT ───────────────────────────────────────────────────────────────
 renderOverview();
+
+// Clear Data button - must be at the end to ensure DOM is ready
+const clearDataBtn = document.getElementById('btn-clear-data');
+if (clearDataBtn) {
+  clearDataBtn.onclick = function() {
+    if (confirm('Clear ALL data? This will remove all imported data.')) {
+      // Clear localStorage
+      localStorage.removeItem('dashboardData');
+      localStorage.setItem('dashboardDataCleared', 'true'); // Set cleared flag
+      
+      // Clear all data in memory
+      RAW_DATA = [];
+      window.RAW_DATA = [];
+      window.ALL_REGIONS = [];
+      window.ALL_FORMATS = [];
+      window.ALL_CAMPAIGNS = [];
+      window.ALL_MONTHS = [];
+      
+      // Clear all filter dropdowns
+      ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = '<option value="">All Regions</option>'; }
+      });
+      ['ov-format','tr-format'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = '<option value="">All Formats</option>'; }
+      });
+      ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = '<option value="">All Campaigns</option>'; }
+      });
+      ['ov-month','geo-month','tr-month','modal-month'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = '<option value="">All Months</option>'; }
+      });
+      
+      // Clear report builder
+      document.getElementById('rb-thead').innerHTML = '';
+      document.getElementById('rb-tbody').innerHTML = '';
+      document.getElementById('rb-pagination').innerHTML = '';
+      document.getElementById('rb-sub').textContent = 'No data loaded. Please import a CSV file.';
+      
+      // Update record count
+      document.querySelector('.topbar-sub span').textContent = '· No data loaded · Import CSV to begin';
+      
+      // Re-render overview with empty data
+      ovInited = false;
+      renderOverview();
+      
+      showToast('✓ All data cleared. Import a CSV to continue.', 'success');
+    }
+  };
+}
 </script>
 </body>
 </html>
