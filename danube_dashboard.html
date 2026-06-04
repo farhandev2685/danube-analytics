@@ -924,14 +924,15 @@ function downloadCSV(rows, filename) {
 let ALL_REGIONS = [];
 let ALL_FORMATS = [];
 
-function populateSelect(id, items, placeholder = '') {
+function populateSelect(id, items, placeholder = '', keepFirst = true) {
   const el = document.getElementById(id);
   if (!el) return;
   const current = el.value;
-  const firstOpt = el.options[0];
+  const firstOpt = keepFirst ? el.options[0] : null;
   el.innerHTML = '';
   if (firstOpt) el.appendChild(firstOpt);
   items.forEach(v => {
+    if (v === undefined || v === null || v === '') return;
     const o = document.createElement('option');
     o.value = v; o.textContent = v;
     el.appendChild(o);
@@ -1047,15 +1048,20 @@ document.getElementById('import-modal-import').addEventListener('click', async (
         RAW_DATA = importedData;
         window.RAW_DATA = importedData;
         
-        // Update regions and formats
-        ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].sort();
-        ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].sort();
+        // Update all filter options from imported data
+        ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+        ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+        const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+        const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
+        
         window.ALL_REGIONS = ALL_REGIONS;
         window.ALL_FORMATS = ALL_FORMATS;
         
-        // Repopulate selects
+        // Repopulate all filter selects with imported data values
         ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
         ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+        ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+        ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
         
         // Update record count
         const recordSpan = document.querySelector('.topbar-sub span');
@@ -1149,13 +1155,20 @@ document.getElementById('import-modal-import').addEventListener('click', async (
       RAW_DATA = mappedData;
       window.RAW_DATA = mappedData;
       
-      ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].sort();
-      ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].sort();
+      // Update all filter options from imported data
+      ALL_REGIONS = [...new Set(RAW_DATA.map(r => r.reg))].filter(v => v).sort();
+      ALL_FORMATS = [...new Set(RAW_DATA.map(r => r.f))].filter(v => v).sort();
+      const ALL_CAMPAIGNS = [...new Set(RAW_DATA.map(r => r.ct))].filter(v => v).sort();
+      const ALL_MONTHS = [...new Set(RAW_DATA.map(r => r.m))].filter(v => v).sort();
+      
       window.ALL_REGIONS = ALL_REGIONS;
       window.ALL_FORMATS = ALL_FORMATS;
       
+      // Repopulate all filter selects with imported data values
       ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
       ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
+      ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
+      ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
       
       const recordSpan = document.querySelector('.topbar-sub span');
       if (recordSpan) {
