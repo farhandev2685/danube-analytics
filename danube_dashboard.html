@@ -815,8 +815,8 @@ function initializeDashboard(data) {
   ['ov-region','geo-region','fmt-region','tr-region','rb-region','modal-region'].forEach(id => populateSelect(id, ALL_REGIONS));
   ['ov-format','tr-format'].forEach(id => populateSelect(id, ALL_FORMATS));
   ['ov-campaign','geo-campaign','rb-campaign','modal-campaign'].forEach(id => populateSelect(id, ALL_CAMPAIGNS));
-  // Use MONTH_LABELS for formatted month display
-  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS, '', true, MONTH_LABELS));
+  // Show actual month values from CSV (not mapped labels) to ensure they match your data
+  ['ov-month','geo-month','tr-month','rb-month','modal-month'].forEach(id => populateSelect(id, ALL_MONTHS));
   
   // Update record count
   document.querySelector('.topbar-sub span').textContent = `· Programmatic Media · All Regions · ${RAW_DATA.length.toLocaleString()} records`;
